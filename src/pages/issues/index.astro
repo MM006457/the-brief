@@ -1,20 +1,25 @@
 ---
+export const prerender = false;
 import Base from "../../layouts/Base.astro";
-import { getIssues, issueUrl, formatDate } from "../../lib/issues";
+import { getIssues, issueUrl, formatDate, pad } from "../../lib/beehiiv";
+import { FEED_REFRESH_SECONDS } from "../../data/site";
+
+Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
 const issues = await getIssues();
 ---
 <Base title="All issues" current="issues">
   <section class="in wrap">
     <span class="label">The archive</span>
     <h1>Every issue</h1>
+    {issues.length === 0 && <p class="none">The first issue lands this week. <a href="/#signup">Subscribe</a> to get it.</p>}
     <ol class="list">
       {issues.map((i) => (
         <li>
           <a href={issueUrl(i)}>
-            <span class="num">{String(i.data.number).padStart(2, "0")}</span>
+            <span class="num">{pad(i.number)}</span>
             <span class="body">
-              <span class="date">Week of {formatDate(i.data.date)}</span>
-              <span class="head">{i.data.headline}</span>
+              <span class="date">{formatDate(i.date)}</span>
+              <span class="head">{i.title}</span>
             </span>
           </a>
         </li>
@@ -26,7 +31,10 @@ const issues = await getIssues();
 <style>
   .wrap { padding-block: 56px; max-width: 860px; }
   h1 { font: 800 clamp(36px, 6vw, 56px)/1 var(--f-display); letter-spacing: -0.03em; margin: 12px 0 28px; }
+  .none { color: var(--muted); }
+  .none a { color: var(--accent); }
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+  .list:empty { display: none; }
   .list a { display: grid; grid-template-columns: 72px 1fr; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--rule); text-decoration: none; }
   .num { font: 800 40px/1 var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; }
   .body { display: grid; gap: 6px; min-width: 0; }

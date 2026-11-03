@@ -1,37 +1,34 @@
 ---
+// One issue, read from Beehiiv. Rendered on request so it always shows the latest version.
+export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import SignUp from "../../components/SignUp.astro";
-import { render } from "astro:content";
-import { getIssues, formatDate } from "../../lib/issues";
+import { getIssues, formatDate, pad } from "../../lib/beehiiv";
+import { FEED_REFRESH_SECONDS } from "../../data/site";
 
-export async function getStaticPaths() {
-  const issues = await getIssues();
-  return issues.map((issue) => ({ params: { slug: issue.id }, props: { issue } }));
-}
+const issues = await getIssues();
+const issue = issues.find((i) => i.slug === Astro.params.slug);
+if (!issue) return new Response(null, { status: 404, statusText: "Not found" });
 
-const { issue } = Astro.props;
-const { Content, headings } = await render(issue);
-const sections = headings.filter((h) => h.depth === 2);
-const num = String(issue.data.number).padStart(2, "0");
+Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
+const num = pad(issue.number);
 ---
-<Base title={`Issue ${num}`} description={issue.data.summary} current="issues">
+<Base title={`Issue ${num}: ${issue.title}`} description={issue.summary} current="issues">
   <article class="issue">
     <header class="mast">
-      <div class="meta"><span>Issue {num}</span><span>Week of {formatDate(issue.data.date)}</span><span>{issue.data.readTime} min read</span></div>
-      <h1>The Brief<em>.</em></h1>
-      <p class="sub">{issue.data.summary}</p>
+      <div class="meta"><span>Issue {num}</span><span>{formatDate(issue.date)}</span><span>{issue.readTime} min read</span></div>
+      <h1>{issue.title}</h1>
+      {issue.summary && <p class="sub">{issue.summary}</p>}
     </header>
 
-    <nav class="toc" aria-label="In this issue">
-      <h2 class="label">In this issue</h2>
-      <ol>
-        {sections.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
-      </ol>
-    </nav>
+    {issue.sections.length > 1 && (
+      <nav class="toc" aria-label="In this issue">
+        <h2 class="label">In this issue</h2>
+        <ol>{issue.sections.map((s) => <li><a href={`#${s.anchor}`}>{s.text}</a></li>)}</ol>
+      </nav>
+    )}
 
-    <div class="prose">
-      <Content />
-    </div>
+    <div class="prose" set:html={issue.html} />
 
     <footer class="end">
       <p class="big">That's this week's Brief.</p>
@@ -50,54 +47,34 @@ const num = String(issue.data.number).padStart(2, "0");
   }
   .mast { padding-block: 56px 32px; border-bottom: 1px solid var(--rule); text-align: center; }
   .meta { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
-  h1 { font: 800 clamp(56px, 13vw, 96px)/0.95 var(--f-display); letter-spacing: -0.04em; margin: 22px 0 14px; }
-  h1 em { font-style: normal; color: var(--accent); }
+  h1 { font: 800 clamp(36px, 7vw, 60px)/1.04 var(--f-display); letter-spacing: -0.03em; margin: 20px auto 14px; text-wrap: balance; max-width: 18ch; }
   .sub { font-size: 19px; color: var(--muted); margin: 0 auto; max-width: 48ch; }
-
   .toc { padding-block: 24px; border-bottom: 1px solid var(--rule); }
   .toc h2 { margin: 0 0 12px; color: var(--muted); }
   .toc ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
-  .toc a {
-    display: inline-block; text-decoration: none; font: 600 14px/1 var(--f-display);
-    padding: 9px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent);
-  }
-  .toc a:hover { filter: brightness(0.96); }
-
+  .toc a { display: inline-block; text-decoration: none; font: 600 14px/1 var(--f-display); padding: 9px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
   .end { text-align: center; padding-top: 48px; color: var(--muted); }
   .big { font: 800 28px/1.2 var(--f-display); color: var(--ink); margin: 0 0 8px; }
 
-  /* ---- Styles for the Markdown inside each issue ---- */
-  .prose { font-size: 17px; line-height: 1.7; }
+  /* ---- Styles for the issue content coming from Beehiiv ---- */
+  .prose { font-size: 17px; line-height: 1.7; overflow-wrap: anywhere; }
   .prose :global(h2) {
     font: 600 14px/1.2 var(--f-display); color: var(--accent);
     margin: 56px 0 0; padding-top: 20px; border-top: 3px solid var(--ink); scroll-margin-top: 80px;
   }
-  .prose :global(h3) {
-    font: 800 clamp(28px, 5.5vw, 38px)/1.1 var(--f-display); letter-spacing: -0.025em;
-    margin: 10px 0 20px; text-wrap: balance;
-  }
+  .prose :global(h3) { font: 800 clamp(26px, 5vw, 36px)/1.12 var(--f-display); letter-spacing: -0.025em; margin: 10px 0 20px; text-wrap: balance; }
+  .prose :global(h4) { font: 700 19px/1.3 var(--f-display); margin: 28px 0 10px; }
   .prose :global(p), .prose :global(li) { max-width: 65ch; }
   .prose :global(ul), .prose :global(ol) { padding-left: 1.2em; display: grid; gap: 8px; }
   .prose :global(li::marker) { color: var(--accent); }
   .prose :global(a) { color: var(--accent); }
-  .prose :global(p:has(> a:first-child)) { font-size: 14px; color: var(--muted); }
-  .prose :global(p:has(> a:first-child) a) { color: var(--muted); }
-
-  /* Quote boxes: "Say it in the interview", learning objectives */
-  .prose :global(blockquote) {
-    margin: 28px 0; padding: 18px 20px; border-radius: var(--radius);
-    background: var(--accent-soft); border: 0;
-  }
+  .prose :global(img) { display: block; max-width: 100%; height: auto; border-radius: var(--radius); margin: 24px 0; }
+  .prose :global(figure) { margin: 24px 0; }
+  .prose :global(figcaption) { font-size: 14px; color: var(--muted); margin-top: 8px; }
+  .prose :global(hr) { border: 0; border-top: 1px solid var(--rule); margin: 40px 0; }
+  .prose :global(blockquote) { margin: 28px 0; padding: 18px 20px; border-radius: var(--radius); background: var(--accent-soft); border: 0; }
   .prose :global(blockquote p) { margin: 0 0 8px; }
   .prose :global(blockquote p:last-child) { margin: 0; }
-  .prose :global(blockquote strong:only-child) { display: block; font: 600 14px/1.2 var(--f-display); color: var(--accent); }
-
-  /* Tables: deal stats, events */
-  .prose :global(table) {
-    width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto;
-    background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); margin: 8px 0 24px;
-  }
-  .prose :global(th), .prose :global(td) { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-  .prose :global(th) { font: 600 13px/1.2 var(--f-display); color: var(--muted); }
-  .prose :global(tr:last-child td) { border-bottom: 0; }
+  .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; margin: 8px 0 24px; }
+  .prose :global(th), .prose :global(td) { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 </style>

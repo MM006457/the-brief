@@ -11,11 +11,11 @@ const hasPhoto = (file: string) => fs.existsSync(path.join(process.cwd(), "publi
   <section class="in intro">
     <span class="label">About us</span>
     <h1>Two students, one newsletter, built from scratch</h1>
-    <p class="lede">We're Misha and Nehir, studying {degree} at {school}. We started The Brief because we wanted one place that explains the week's business news and tells you what to say about it in an interview.</p>
+    <p class="lede">We're Misha Mody and Nehir Yetis, studying {degree} at {school}. We started The Brief because we wanted one place that explains the week's business news and tells you what to say about it in an interview.</p>
     <div class="chips">
       <span class="chip">{school}</span>
       <span class="chip">{degree}</span>
-      <span class="chip">Every Monday since October 2026</span>
+      <span class="chip">Every Monday since November 2026</span>
     </div>
   </section>
 
@@ -75,8 +75,8 @@ const hasPhoto = (file: string) => fs.existsSync(path.join(process.cwd(), "publi
   .people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding-block: 8px 56px; }
   @media (max-width: 760px) { .people { grid-template-columns: 1fr; } }
   .person { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
-  .photo { aspect-ratio: 4 / 3; max-width: 100%; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); text-align: center; border-bottom: 1px solid var(--rule); }
-  .photo img { width: 100%; height: 100%; object-fit: cover; }
+  .photo { position: relative; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); text-align: center; border-bottom: 1px solid var(--rule); }
+  .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
   .photo span { font: 600 14px/1.5 var(--f-display); border: 1.5px dashed currentColor; border-radius: 10px; padding: 14px 18px; }
   .photo small { font: 500 12px var(--f-mono); opacity: 0.8; }
   .pbody { padding: 24px; display: grid; gap: 18px; }

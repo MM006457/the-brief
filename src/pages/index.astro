@@ -1,63 +1,76 @@
 ---
+// Homepage. Rendered on request (not at build time) so new Beehiiv issues appear automatically.
+export const prerender = false;
 import Base from "../layouts/Base.astro";
 import AskForm from "../components/AskForm.astro";
 import SignUp from "../components/SignUp.astro";
-import { getIssues, issueUrl, formatDate, sectionAnchor } from "../lib/issues";
+import { getIssues, issueUrl, formatDate, pad } from "../lib/beehiiv";
+import { FEED_REFRESH_SECONDS } from "../data/site";
+
+Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
 
 const issues = await getIssues();
 const latest = issues[0];
 const url = latest ? issueUrl(latest) : "/issues/";
 ---
 <Base>
-  {latest && (
+  {latest ? (
     <section class="hero" id="latest">
       <div class="in grid">
         <div>
           <div class="eyebrow">
-            <span class="label">Latest · Issue {String(latest.data.number).padStart(2, "0")}</span>
-            <span>Week of {formatDate(latest.data.date)}</span>
-            <span>{latest.data.readTime} min read</span>
+            <span class="label">Latest · Issue {pad(latest.number)}</span>
+            <span>{formatDate(latest.date)}</span>
+            <span>{latest.readTime} min read</span>
           </div>
-          <h1>{latest.data.headline}</h1>
-          <p class="deck">{latest.data.summary}</p>
+          <h1>{latest.title}</h1>
+          {latest.summary && <p class="deck">{latest.summary}</p>}
           <div class="cta">
-            <a class="btn" href={url}>Read Issue {String(latest.data.number).padStart(2, "0")}</a>
+            <a class="btn" href={url}>Read Issue {pad(latest.number)}</a>
             <a class="ghost" href="/issues/">All issues →</a>
           </div>
         </div>
-        <aside class="index" aria-label="In this issue">
-          <h2 class="label muted">In this issue</h2>
-          <ol>
-            {latest.data.stories.map((s) => (
-              <li>
-                <a href={`${url}#${sectionAnchor(s.section)}`}>
-                  <span class="label">{s.section}</span>
-                  <span class="t">{s.title}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </aside>
+        {latest.stories.length > 0 && (
+          <aside class="index" aria-label="In this issue">
+            <h2 class="label muted">In this issue</h2>
+            <ol>
+              {latest.stories.map((s) => (
+                <li><a href={`${url}#${s.anchor}`}><span class="label">{s.section}</span><span class="t">{s.title}</span></a></li>
+              ))}
+            </ol>
+          </aside>
+        )}
+      </div>
+    </section>
+  ) : (
+    <section class="hero" id="latest">
+      <div class="in empty">
+        <span class="label">Coming soon</span>
+        <h1>Issue 01 lands this week</h1>
+        <p class="deck">What every business student should know this week, with what to say about it in your next interview. Subscribe and it arrives in your inbox.</p>
+        <div class="cta"><a class="btn" href="#signup">Subscribe free</a></div>
       </div>
     </section>
   )}
 
-  <section class="desks" id="desks">
-    <div class="in">
-      <h2 class="h2">The desks</h2>
-      <p class="sub">Four sections, every Monday. Each one ends with what it means for you.</p>
-      <div class="cards">
-        {latest?.data.stories.map((s) => (
-          <a class="card" href={`${url}#${sectionAnchor(s.section)}`}>
-            <span class="label">{s.section}</span>
-            <h3>{s.title}</h3>
-            <p>{s.blurb}</p>
-            <span class="meta">Issue {String(latest.data.number).padStart(2, "0")}</span>
-          </a>
-        ))}
+  {latest && latest.stories.length > 0 && (
+    <section class="desks" id="desks">
+      <div class="in">
+        <h2 class="h2">The desks</h2>
+        <p class="sub">Every Monday. Each story ends with what it means for you.</p>
+        <div class="cards">
+          {latest.stories.slice(0, 4).map((s) => (
+            <a class="card" href={`${url}#${s.anchor}`}>
+              <span class="label">{s.section}</span>
+              <h3>{s.title}</h3>
+              {s.blurb && <p>{s.blurb}</p>}
+              <span class="meta">Issue {pad(latest.number)}</span>
+            </a>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <AskForm />
   <SignUp />
@@ -66,11 +79,9 @@ const url = latest ? issueUrl(latest) : "/issues/";
 <style>
   .grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 48px; padding-block: 56px; }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; gap: 32px; padding-block: 36px; } }
+  .empty { padding-block: 64px; }
   .eyebrow { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 14px; align-items: baseline; }
-  h1 {
-    font: 800 clamp(36px, 5.6vw, 60px)/1.04 var(--f-display);
-    letter-spacing: -0.03em; margin: 18px 0; text-wrap: balance;
-  }
+  h1 { font: 800 clamp(36px, 5.6vw, 60px)/1.04 var(--f-display); letter-spacing: -0.03em; margin: 18px 0; text-wrap: balance; max-width: 20ch; }
   .deck { font-size: 20px; line-height: 1.5; color: var(--muted); margin: 0 0 28px; max-width: 56ch; }
   .cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
   .ghost { font-weight: 600; font-size: 14px; color: var(--accent); text-decoration: none; }
@@ -82,7 +93,6 @@ const url = latest ? issueUrl(latest) : "/issues/";
   .index .label { display: block; margin-bottom: 6px; }
   .t { font: 600 17px/1.35 var(--f-display); }
   .index a:hover .t { color: var(--accent); }
-
   .desks { border-top: 1px solid var(--rule); }
   .desks .in { padding-block: 48px; }
   .h2 { font: 800 30px/1.2 var(--f-display); letter-spacing: -0.02em; margin: 0 0 6px; }
