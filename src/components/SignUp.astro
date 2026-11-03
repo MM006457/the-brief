@@ -1,5 +1,5 @@
 ---
-// Email sign-up band. In step 5 this form connects to Beehiiv.
+// Email sign-up band. Sends the email to /api/subscribe, which adds it to Beehiiv.
 ---
 <section class="signup" id="signup">
   <div class="in grid">
@@ -7,19 +7,46 @@
       <h2>Five minutes. Every Monday.</h2>
       <p>Written by two Warwick Business School students for everyone applying, interviewing or just trying to keep up.</p>
     </div>
-    <form id="signup-form">
+    <form id="signup-form" novalidate>
       <label for="signup-email" class="sr-only">Email address</label>
-      <input id="signup-email" type="email" required placeholder="you@university.ac.uk" autocomplete="email" />
-      <button class="btn" type="submit">Subscribe</button>
-      <p class="fine" id="signup-msg">Free. Unsubscribe any time.</p>
+      <input id="signup-email" name="email" type="email" required placeholder="you@university.ac.uk" autocomplete="email" />
+      <!-- Hidden from people; catches spam bots -->
+      <input class="hp" id="signup-website" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />
+      <button class="btn" id="signup-btn" type="submit">Subscribe</button>
+      <p class="fine" id="signup-msg" role="status">Free. Unsubscribe any time.</p>
     </form>
   </div>
 </section>
 
 <script>
-  document.getElementById("signup-form")!.addEventListener("submit", (e) => {
+  const form = document.getElementById("signup-form") as HTMLFormElement;
+  const email = document.getElementById("signup-email") as HTMLInputElement;
+  const website = document.getElementById("signup-website") as HTMLInputElement;
+  const btn = document.getElementById("signup-btn") as HTMLButtonElement;
+  const msg = document.getElementById("signup-msg")!;
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    document.getElementById("signup-msg")!.textContent = "Sign-up opens soon. We're connecting it to our mailing list.";
+    if (!email.value.trim()) { msg.textContent = "Enter your email to subscribe."; email.focus(); return; }
+    btn.disabled = true;
+    btn.textContent = "Subscribing…";
+    msg.dataset.state = "";
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.value, website: website.value }),
+      });
+      const data = await res.json();
+      msg.textContent = data.message;
+      msg.dataset.state = data.ok ? "ok" : "error";
+      if (data.ok) { form.reset(); btn.textContent = "Subscribed"; return; }
+    } catch {
+      msg.textContent = "We couldn't sign you up just now. Please try again in a minute.";
+      msg.dataset.state = "error";
+    }
+    btn.disabled = false;
+    btn.textContent = "Subscribe";
   });
 </script>
 
@@ -38,6 +65,10 @@
     border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: var(--band-ink);
   }
   input::placeholder { color: var(--band-ink); opacity: 0.55; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   .btn { padding: 14px 18px; background: var(--band-accent); color: #2b1a40; }
-  .fine { width: 100%; font-size: 13px; opacity: 0.7; margin-top: 4px; }
+  .btn:disabled { opacity: 0.7; cursor: default; }
+  .fine { width: 100%; font-size: 13px; opacity: 0.75; margin-top: 4px; }
+  .fine[data-state="ok"] { opacity: 1; color: #7fe0ad; font-weight: 600; }
+  .fine[data-state="error"] { opacity: 1; color: #ffb3a6; }
 </style>
