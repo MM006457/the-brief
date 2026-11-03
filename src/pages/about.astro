@@ -34,14 +34,6 @@ const hasPhoto = (file: string) => fs.existsSync(path.join(process.cwd(), "publi
           </div>
           <dl>
             <div><dt>Degree</dt><dd>{degree}, {school}</dd></div>
-            <div>
-              <dt>Modules</dt>
-              <dd>
-                <ul class="mods">
-                  {p.modules.map((m) => <li><code>{m.code}</code><span>{m.name}</span></li>)}
-                </ul>
-              </dd>
-            </div>
             <div><dt>Writes</dt><dd>{p.writes}</dd></div>
           </dl>
           <div class="links">
@@ -93,10 +85,6 @@ const hasPhoto = (file: string) => fs.existsSync(path.join(process.cwd(), "publi
   dl { margin: 0; display: grid; gap: 14px; }
   dt { font: 600 13px/1 var(--f-display); color: var(--muted); margin-bottom: 6px; }
   dd { margin: 0; }
-  .mods { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .mods li { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: baseline; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
-  .mods li:last-child { border-bottom: 0; padding-bottom: 0; }
-  code { font: 500 13px/1 var(--f-mono); color: var(--accent); }
   .links { display: flex; gap: 10px; flex-wrap: wrap; }
   .links:empty { display: none; }
   .ln { font: 600 13px/1 var(--f-body); padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px; text-decoration: none; }

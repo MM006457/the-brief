@@ -1,44 +1,76 @@
 ---
-// Market ticker. These are SAMPLE figures for now.
-// In step 6 we replace them with live data from a market data API.
-const markets = [
-  { name: "S&P 500", value: "6,812.4", change: "+0.42%", up: true },
-  { name: "NASDAQ", value: "23,105.7", change: "+0.61%", up: true },
-  { name: "FTSE 100", value: "9,488.2", change: "-0.18%", up: false },
-  { name: "GBP/USD", value: "1.3412", change: "+0.07%", up: true },
-  { name: "BRENT", value: "$84.10", change: "-1.12%", up: false },
-  { name: "GOLD", value: "$3,912", change: "+0.33%", up: true },
-  { name: "US 10Y", value: "4.98%", change: "-0.03", up: false },
-  { name: "UK 10Y", value: "4.71%", change: "+0.02", up: true },
-];
+// Live market ticker. Prices come from /api/markets (src/pages/api/markets.ts).
+// Edit which markets appear in src/data/markets.ts.
+import { markets } from "../data/markets";
 ---
-<div class="ticker" aria-label="Market ticker (sample data)">
+<div class="ticker" aria-label="Market prices">
   <div class="in row">
-    <span class="tag">Sample data</span>
+    <span class="tag" id="tk-status">Markets</span>
     <div class="track">
-      <div class="move">
-        {[...markets, ...markets].map((m, i) => (
-          <span class="tk" aria-hidden={i >= markets.length ? "true" : undefined}>
-            <b>{m.name}</b>
-            <span>{m.value}</span>
-            <span class={m.up ? "u" : "d"}>{m.up ? "▲" : "▼"} {m.change}</span>
-          </span>
+      <div class="move" id="tk-move">
+        {markets.map((m) => (
+          <span class="tk"><b>{m.label}</b><span class="dim">…</span></span>
         ))}
       </div>
     </div>
   </div>
 </div>
 
+<script>
+  type Quote = { label: string; note?: string; price: number; change: number; percent: number };
+
+  const move = document.getElementById("tk-move")!;
+  const status = document.getElementById("tk-status")!;
+
+  const fmt = (n: number) =>
+    n >= 1000 ? n.toLocaleString("en-GB", { maximumFractionDigits: 0 })
+    : n >= 10 ? n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : n.toLocaleString("en-GB", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+  function item(q: Quote, hidden: boolean) {
+    const up = q.percent >= 0;
+    const el = document.createElement("span");
+    el.className = "tk";
+    if (hidden) el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<b></b>${q.note ? '<span class="dim"></span>' : ""}<span class="px"></span><span class="${up ? "u" : "d"}"></span>`;
+    el.querySelector("b")!.textContent = q.label;
+    if (q.note) el.querySelector(".dim")!.textContent = q.note;
+    el.querySelector(".px")!.textContent = fmt(q.price);
+    el.querySelector(up ? ".u" : ".d")!.textContent = `${up ? "▲" : "▼"} ${Math.abs(q.percent).toFixed(2)}%`;
+    return el;
+  }
+
+  async function load() {
+    try {
+      const res = await fetch("/api/markets");
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      move.replaceChildren(
+        ...data.quotes.map((q: Quote) => item(q, false)),
+        ...data.quotes.map((q: Quote) => item(q, true)) // second copy makes the scroll loop seamlessly
+      );
+      move.classList.add("live");
+      const t = new Date(data.updated).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+      status.textContent = `Updated ${t} UK`;
+    } catch (e) {
+      status.textContent = "Markets unavailable";
+    }
+  }
+  load();
+</script>
+
 <style>
   .ticker { background: var(--band); color: var(--band-ink); overflow: hidden; font: 500 13px/1 var(--f-mono); }
   .row { display: flex; align-items: center; gap: 16px; padding-block: 10px; }
-  .tag { flex: none; font: 600 12px/1 var(--f-display); color: var(--band-accent); }
+  .tag { flex: none; font: 600 12px/1 var(--f-display); color: var(--band-accent); white-space: nowrap; }
   .track { overflow: hidden; min-width: 0; mask-image: linear-gradient(90deg, #000 85%, transparent); }
-  .move { display: flex; gap: 28px; width: max-content; animation: scroll 40s linear infinite; }
+  .move { display: flex; gap: 28px; width: max-content; }
+  .move.live { animation: scroll 50s linear infinite; }
   .ticker:hover .move { animation-play-state: paused; }
-  @media (prefers-reduced-motion: reduce) { .move { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .move.live { animation: none; } }
   @keyframes scroll { to { transform: translateX(-50%); } }
-  .tk { display: flex; gap: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .u { color: #7fe0ad; }
-  .d { color: #ff9d8a; }
+  .move :global(.tk) { display: flex; gap: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .move :global(.dim) { opacity: 0.55; }
+  .move :global(.u) { color: #7fe0ad; }
+  .move :global(.d) { color: #ff9d8a; }
 </style>

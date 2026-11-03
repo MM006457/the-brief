@@ -4,6 +4,7 @@ import "../styles/theme.css";
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import Ticker from "../components/Ticker.astro";
 
 interface Props {
   title?: string;
@@ -43,6 +44,7 @@ const fullTitle = title ? `${title} · The Brief` : "The Brief";
     </script>
   </head>
   <body>
+    <Ticker />
     <Nav current={current} />
     <main>
       <slot />

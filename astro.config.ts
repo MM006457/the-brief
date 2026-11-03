@@ -1,7 +1,10 @@
 import { defineConfig } from "astro/config";
+import vercel from "@astrojs/vercel";
 
-// The Brief is a static site: every page is built ahead of time and served by Vercel.
-// When we add the live ticker and Ask The Brief (steps 6 and 7), they'll use Vercel functions in /api.
+// Pages are built ahead of time (static). Only routes marked `prerender = false`
+// run on demand as Vercel functions, e.g. /api/markets for the live ticker.
 export default defineConfig({
   site: "https://the-brief-phi-one.vercel.app",
+  output: "static",
+  adapter: vercel(),
 });

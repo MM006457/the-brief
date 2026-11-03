@@ -1,4 +1,4 @@
-// The About page reads from this file. Edit names, roles, modules and links here.
+// The About page reads from this file. Edit names, roles and links here.
 // Photos: put a square-ish photo in public/team/ named exactly as `photo` below
 // (e.g. public/team/misha.jpg). Until it exists, the page shows a placeholder.
 
@@ -11,11 +11,6 @@ export const team = [
     role: "Co-founder · Editorial, design & build",
     photo: "misha.jpg",
     writes: "Markets & Macro, The Deal Desk",
-    modules: [
-      { code: "EC131", name: "Economics for Business" },
-      { code: "IB1250", name: "Financial Management" },
-      { code: "IB1380", name: "Management, Organisation and Society" },
-    ],
     links: [
       { label: "LinkedIn", url: "" }, // paste your LinkedIn URL between the quotes
       { label: "GitHub", url: "https://github.com/MM006457" },
@@ -26,12 +21,6 @@ export const team = [
     role: "Co-founder · Events, partnerships & growth",
     photo: "nehir.jpg",
     writes: "Events & Deadlines, Career Corner",
-    modules: [
-      // Nehir: replace these with your module codes and names
-      { code: "[code]", name: "Nehir's module" },
-      { code: "[code]", name: "Nehir's module" },
-      { code: "[code]", name: "Nehir's module" },
-    ],
     links: [
       { label: "LinkedIn", url: "" },
     ],
@@ -45,6 +34,6 @@ export const buildSteps = [
   { title: "Build pages and issue template", detail: "Astro components, one Markdown file per issue", status: "done" },
   { title: "Browser publishing", detail: "Decap CMS so we write issues without code", status: "next" },
   { title: "Email sign-up", detail: "Beehiiv subscriber list and analytics", status: "planned" },
-  { title: "Live market ticker", detail: "Server function calling a market data API", status: "planned" },
+  { title: "Live market ticker", detail: "Vercel function calling the Twelve Data API, cached every 30 minutes", status: "done" },
   { title: "Ask The Brief", detail: "Subscriber-only questions, answered weekly", status: "planned" },
 ];

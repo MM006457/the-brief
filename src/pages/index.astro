@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import Ticker from "../components/Ticker.astro";
 import AskForm from "../components/AskForm.astro";
 import SignUp from "../components/SignUp.astro";
 import { getIssues, issueUrl, formatDate, sectionAnchor } from "../lib/issues";
@@ -10,8 +9,6 @@ const latest = issues[0];
 const url = latest ? issueUrl(latest) : "/issues/";
 ---
 <Base>
-  <Ticker />
-
   {latest && (
     <section class="hero" id="latest">
       <div class="in grid">
