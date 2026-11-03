@@ -1,40 +1,46 @@
-# Astro
+# The Brief
 
-This directory is a brief example of an [Astro](https://astro.build/) site that can be deployed to Vercel with zero configuration. This demo showcases:
+**What every business student should know this week.**
 
-- `/` - A static page (pre-rendered)
-- `/ssr` - A page that uses server-side rendering (through [Vercel Functions](https://vercel.com/docs/functions))
-- `/ssr-with-swr-caching` - Similar to the previous page, but also caches the response on the [Vercel Edge Network](https://vercel.com/docs/edge-network/overview) using `cache-control` headers
-- `/image` - Astro [Asset](https://docs.astro.build/en/guides/images/) using Vercel [Image Optimization](https://vercel.com/docs/image-optimization)
+The Brief is a weekly newsletter and website for business students, written and built by Misha and Nehir, Management with a Placement Year students at Warwick Business School. Every story ends with what it means for your applications, and what to say about it in an interview.
 
-Learn more about [Astro on Vercel](https://vercel.com/docs/frameworks/astro).
+Live site: https://the-brief-phi-one.vercel.app
 
-## Deploy Your Own
+## How it's built
 
-Deploy your own Astro project with Vercel.
+| Part | Tool | Why |
+| --- | --- | --- |
+| Site framework | [Astro](https://astro.build) | Fast static pages, components, Markdown content |
+| Content | Markdown files in `src/content/issues/` | One file per issue, version-controlled |
+| Hosting | [Vercel](https://vercel.com) | Deploys automatically on every push to `main` |
+| Code | GitHub + Codespaces | Built entirely in the browser |
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/examples/tree/main/framework-boilerplates/astro&template=astro)
+Planned: Decap CMS (browser editor), Beehiiv (email sign-up), a live market ticker and subscriber Q&A.
 
-_Live Example: https://astro-template.vercel.app_
+## Project structure
 
-## Project Structure
+```
+src/
+  content/issues/   one Markdown file per weekly issue
+  data/team.ts      About page: names, modules, links, build tracker
+  styles/theme.css  all colours and fonts
+  components/       nav, footer, ticker, sign-up, Ask The Brief form
+  layouts/          the page shell
+  pages/            homepage, /issues, /issues/[issue], /about
+public/
+  team/             team photos (misha.jpg, nehir.jpg)
+```
 
-Astro looks for `.astro`, `.md`, or `.js` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Publish a new issue
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components or layouts.
+1. Copy `src/content/issues/issue-01.md` to `issue-02.md`.
+2. Update the fields at the top (`number`, `headline`, `summary`, `date`, `stories`).
+3. Write the issue below. Each section is a `##` heading (the section name) followed by a `###` heading (the story title). Quotes (`>`) become highlighted boxes.
+4. Commit and sync. Vercel publishes it in about a minute, and the homepage switches to the newest issue automatically.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Run it locally
 
-## Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                | Action                                             |
-| :--------------------- | :------------------------------------------------- |
-| `pnpm install`          | Installs dependencies                              |
-| `pnpm run dev`          | Starts local dev server at `localhost:3000`        |
-| `pnpm run build`        | Build your production site to `./dist/`            |
-| `pnpm run preview`      | Preview your build locally, before deploying       |
-| `pnpm run start`       | Starts a production dev server at  `localhost:3000`     |
-| `pnpm run astro ...`    | Run CLI commands like `astro add`, `astro preview` |
-| `pnpm run astro --help` | Get help using the Astro CLI                       |
+```bash
+npm install
+npm run dev
+```

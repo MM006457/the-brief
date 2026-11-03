@@ -1,0 +1,44 @@
+---
+// Market ticker. These are SAMPLE figures for now.
+// In step 6 we replace them with live data from a market data API.
+const markets = [
+  { name: "S&P 500", value: "6,812.4", change: "+0.42%", up: true },
+  { name: "NASDAQ", value: "23,105.7", change: "+0.61%", up: true },
+  { name: "FTSE 100", value: "9,488.2", change: "-0.18%", up: false },
+  { name: "GBP/USD", value: "1.3412", change: "+0.07%", up: true },
+  { name: "BRENT", value: "$84.10", change: "-1.12%", up: false },
+  { name: "GOLD", value: "$3,912", change: "+0.33%", up: true },
+  { name: "US 10Y", value: "4.98%", change: "-0.03", up: false },
+  { name: "UK 10Y", value: "4.71%", change: "+0.02", up: true },
+];
+---
+<div class="ticker" aria-label="Market ticker (sample data)">
+  <div class="in row">
+    <span class="tag">Sample data</span>
+    <div class="track">
+      <div class="move">
+        {[...markets, ...markets].map((m, i) => (
+          <span class="tk" aria-hidden={i >= markets.length ? "true" : undefined}>
+            <b>{m.name}</b>
+            <span>{m.value}</span>
+            <span class={m.up ? "u" : "d"}>{m.up ? "▲" : "▼"} {m.change}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ticker { background: var(--band); color: var(--band-ink); overflow: hidden; font: 500 13px/1 var(--f-mono); }
+  .row { display: flex; align-items: center; gap: 16px; padding-block: 10px; }
+  .tag { flex: none; font: 600 12px/1 var(--f-display); color: var(--band-accent); }
+  .track { overflow: hidden; min-width: 0; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .move { display: flex; gap: 28px; width: max-content; animation: scroll 40s linear infinite; }
+  .ticker:hover .move { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) { .move { animation: none; } }
+  @keyframes scroll { to { transform: translateX(-50%); } }
+  .tk { display: flex; gap: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .u { color: #7fe0ad; }
+  .d { color: #ff9d8a; }
+</style>

@@ -1,0 +1,53 @@
+/* ==========================================================
+   THE BRIEF — THEME
+   Change colours and fonts here and the whole site updates.
+   Light mode is the first block. Dark mode is repeated twice
+   below (once for "follow my device", once for the toggle):
+   if you change a dark colour, change it in BOTH dark blocks.
+   ========================================================== */
+
+:root {
+  /* Colours: light mode */
+  --paper: #f8f7fb;        /* page background */
+  --surface: #ffffff;      /* cards, nav bar */
+  --ink: #1a1726;          /* main text */
+  --muted: #5e5870;        /* secondary text */
+  --rule: #e2dfea;         /* lines and borders */
+  --accent: #5b2a86;       /* Warwick aubergine: links, buttons, labels */
+  --accent-soft: #efe8f7;  /* light accent backgrounds */
+  --on-accent: #ffffff;    /* text on accent buttons */
+  --band: #2b1a40;         /* dark bands (ticker, sign-up, build) */
+  --band-ink: #f4f0fa;     /* text on dark bands */
+  --band-accent: #c7b2ef;  /* highlights on dark bands */
+  --up: #1c7a4f;           /* market up */
+  --down: #b4341f;         /* market down / red flags */
+
+  /* Fonts */
+  --f-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --f-body: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  /* Layout */
+  --max: 1120px;     /* widest content */
+  --read: 720px;     /* article reading width */
+  --radius: 12px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #120f1a; --surface: #1b1726; --ink: #ece8f4; --muted: #a39bb5; --rule: #2e2840;
+    --accent: #b99cf0; --accent-soft: #2a2140; --on-accent: #120f1a;
+    --band: #241a36; --band-ink: #ece8f4; --band-accent: #c7b2ef;
+    --up: #5fd39b; --down: #ff8a73;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #120f1a; --surface: #1b1726; --ink: #ece8f4; --muted: #a39bb5; --rule: #2e2840;
+  --accent: #b99cf0; --accent-soft: #2a2140; --on-accent: #120f1a;
+  --band: #241a36; --band-ink: #ece8f4; --band-accent: #c7b2ef;
+  --up: #5fd39b; --down: #ff8a73;
+  color-scheme: dark;
+}

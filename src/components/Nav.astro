@@ -1,0 +1,64 @@
+---
+interface Props { current?: "home" | "issues" | "about"; }
+const { current = "home" } = Astro.props;
+---
+<nav class="top" aria-label="Main">
+  <div class="in row">
+    <a class="logo" href="/">The Brief<em>.</em></a>
+    <div class="links">
+      <a href="/issues/" aria-current={current === "issues" ? "page" : undefined}>Issues</a>
+      <a href="/#desks">Sections</a>
+      <a href="/#ask">Ask us</a>
+      <a href="/about/" aria-current={current === "about" ? "page" : undefined}>About</a>
+    </div>
+    <button class="theme" id="theme" type="button" aria-label="Switch colour theme"><span id="theme-l">Dark</span></button>
+    <a class="btn" href="/#signup">Subscribe</a>
+  </div>
+</nav>
+
+<script>
+  const root = document.documentElement;
+  const label = document.getElementById("theme-l")!;
+  const isDark = () =>
+    root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const sync = () => { label.textContent = isDark() ? "Light" : "Dark"; };
+  sync();
+  document.getElementById("theme")!.addEventListener("click", () => {
+    root.dataset.theme = isDark() ? "light" : "dark";
+    sync();
+    try { localStorage.setItem("brief-theme", root.dataset.theme); } catch (e) {}
+  });
+</script>
+
+<style>
+  .top {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+  .row { display: flex; align-items: center; gap: 20px; padding-block: 14px; }
+  .logo {
+    font: 800 26px/1 var(--f-display);
+    letter-spacing: -0.03em;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  .logo em { font-style: normal; color: var(--accent); }
+  .links { display: flex; gap: 22px; font-weight: 500; font-size: 15px; }
+  .links a { text-decoration: none; color: var(--muted); }
+  .links a:hover, .links a[aria-current] { color: var(--ink); }
+  .theme {
+    font: 500 13px/1 var(--f-body);
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .theme:hover { color: var(--ink); border-color: var(--muted); }
+  @media (max-width: 760px) { .links { display: none; } }
+  @media (max-width: 400px) { .theme { padding: 10px; } }
+</style>

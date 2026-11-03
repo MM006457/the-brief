@@ -1,98 +1,101 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Card from '../components/Card.astro';
+import Base from "../layouts/Base.astro";
+import Ticker from "../components/Ticker.astro";
+import AskForm from "../components/AskForm.astro";
+import SignUp from "../components/SignUp.astro";
+import { getIssues, issueUrl, formatDate, sectionAnchor } from "../lib/issues";
 
-export const prerender = true;
+const issues = await getIssues();
+const latest = issues[0];
+const url = latest ? issueUrl(latest) : "/issues/";
 ---
+<Base>
+  <Ticker />
 
-<Layout title="Welcome to Astro.">
-	<main>
-		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
-		<p class="instructions">
-			Check out the <code>src/pages</code> directory to get started.<br />
-			<strong>Code Challenge:</strong> Tweak the "Welcome to Astro" message above.
-		</p>
-		<ul role="list" class="link-card-grid">
-			<Card
-				href="https://docs.astro.build/"
-				title="Documentation"
-				body="Learn how Astro works and explore the official API docs."
-			/>
-			<Card
-				href="https://astro.build/integrations/"
-				title="Integrations"
-				body="Supercharge your project with new frameworks and libraries."
-			/>
-			<Card
-				href="https://astro.build/themes/"
-				title="Themes"
-				body="Explore a galaxy of community-built starter themes."
-			/>
-			<Card
-				href="https://astro.build/chat/"
-				title="Chat"
-				body="Come say hi to our amazing Discord community. ❤️"
-			/>
-		</ul>
-	</main>
-</Layout>
+  {latest && (
+    <section class="hero" id="latest">
+      <div class="in grid">
+        <div>
+          <div class="eyebrow">
+            <span class="label">Latest · Issue {String(latest.data.number).padStart(2, "0")}</span>
+            <span>Week of {formatDate(latest.data.date)}</span>
+            <span>{latest.data.readTime} min read</span>
+          </div>
+          <h1>{latest.data.headline}</h1>
+          <p class="deck">{latest.data.summary}</p>
+          <div class="cta">
+            <a class="btn" href={url}>Read Issue {String(latest.data.number).padStart(2, "0")}</a>
+            <a class="ghost" href="/issues/">All issues →</a>
+          </div>
+        </div>
+        <aside class="index" aria-label="In this issue">
+          <h2 class="label muted">In this issue</h2>
+          <ol>
+            {latest.data.stories.map((s) => (
+              <li>
+                <a href={`${url}#${sectionAnchor(s.section)}`}>
+                  <span class="label">{s.section}</span>
+                  <span class="t">{s.title}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </div>
+    </section>
+  )}
+
+  <section class="desks" id="desks">
+    <div class="in">
+      <h2 class="h2">The desks</h2>
+      <p class="sub">Four sections, every Monday. Each one ends with what it means for you.</p>
+      <div class="cards">
+        {latest?.data.stories.map((s) => (
+          <a class="card" href={`${url}#${sectionAnchor(s.section)}`}>
+            <span class="label">{s.section}</span>
+            <h3>{s.title}</h3>
+            <p>{s.blurb}</p>
+            <span class="meta">Issue {String(latest.data.number).padStart(2, "0")}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <AskForm />
+  <SignUp />
+</Base>
 
 <style>
-	:root {
-		--astro-gradient: linear-gradient(0deg, #4f39fa, #da62c4);
-	}
+  .grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 48px; padding-block: 56px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; gap: 32px; padding-block: 36px; } }
+  .eyebrow { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 14px; align-items: baseline; }
+  h1 {
+    font: 800 clamp(36px, 5.6vw, 60px)/1.04 var(--f-display);
+    letter-spacing: -0.03em; margin: 18px 0; text-wrap: balance;
+  }
+  .deck { font-size: 20px; line-height: 1.5; color: var(--muted); margin: 0 0 28px; max-width: 56ch; }
+  .cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .ghost { font-weight: 600; font-size: 14px; color: var(--accent); text-decoration: none; }
+  .index { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 22px; align-self: start; }
+  .muted { color: var(--muted); margin: 0 0 6px; }
+  .index ol { list-style: none; margin: 0; padding: 0; }
+  .index li a { display: block; padding: 14px 0; border-bottom: 1px solid var(--rule); text-decoration: none; }
+  .index li:last-child a { border-bottom: 0; padding-bottom: 2px; }
+  .index .label { display: block; margin-bottom: 6px; }
+  .t { font: 600 17px/1.35 var(--f-display); }
+  .index a:hover .t { color: var(--accent); }
 
-	h1 {
-		margin: 2rem 0;
-	}
-
-	main {
-		margin: auto;
-		padding: 1em;
-		max-width: 60ch;
-	}
-
-	.text-gradient {
-		font-weight: 900;
-		background-image: var(--astro-gradient);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-size: 100% 200%;
-		background-position-y: 100%;
-		border-radius: 0.4rem;
-		animation: pulse 4s ease-in-out infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			background-position-y: 0%;
-		}
-		50% {
-			background-position-y: 80%;
-		}
-	}
-
-	.instructions {
-		line-height: 1.6;
-		margin: 1rem 0;
-		background: #4f39fa;
-		padding: 1rem;
-		border-radius: 0.4rem;
-		color: var(--color-bg);
-	}
-
-	.instructions code {
-		font-size: 0.875em;
-		border: 0.1em solid var(--color-border);
-		border-radius: 4px;
-		padding: 0.15em 0.25em;
-	}
-
-	.link-card-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
-		gap: 1rem;
-		padding: 0;
-	}
+  .desks { border-top: 1px solid var(--rule); }
+  .desks .in { padding-block: 48px; }
+  .h2 { font: 800 30px/1.2 var(--f-display); letter-spacing: -0.02em; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  @media (max-width: 960px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .cards { grid-template-columns: 1fr; } }
+  .card { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 3px solid var(--ink); text-decoration: none; }
+  .card h3 { font: 700 21px/1.25 var(--f-display); margin: 0; text-wrap: balance; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .meta { margin-top: auto; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .card:hover h3 { color: var(--accent); }
 </style>

@@ -1,0 +1,80 @@
+---
+// Ask The Brief. In step 7 this checks the email is a subscriber
+// and sends the question to The Brief's Gmail.
+---
+<section class="ask" id="ask">
+  <div class="in grid">
+    <div class="copy">
+      <span class="label">Subscribers only</span>
+      <h2>Ask The Brief</h2>
+      <p>Questions about the degree, placement year, applications or interviews. We answer the best ones in the next issue, or reply to you directly by email.</p>
+      <div class="qa">
+        <span class="label">The kind of question we answer</span>
+        <p class="q">"Is it worth applying for spring weeks in first year if I'm not sure I want finance?"</p>
+        <p class="a">Yes. Spring weeks are low-commitment, and many convert into placement fast-tracks. Treat them as research: you'll learn what you don't want as fast as what you do.</p>
+      </div>
+    </div>
+    <form class="card" id="ask-form">
+      <div class="fld">
+        <label for="q-email">Your subscriber email</label>
+        <input id="q-email" type="email" required placeholder="you@university.ac.uk" autocomplete="email" />
+      </div>
+      <div class="fld">
+        <label for="q-topic">Topic</label>
+        <select id="q-topic">
+          <option>Placement year</option>
+          <option>Applications &amp; CVs</option>
+          <option>Interviews &amp; assessment centres</option>
+          <option>The degree &amp; modules</option>
+          <option>Uni life</option>
+          <option>Something else</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label for="q-text">Your question</label>
+        <textarea id="q-text" rows="4" required maxlength="600" placeholder="e.g. How early should I start applying for placements?"></textarea>
+      </div>
+      <fieldset class="fld">
+        <legend>How should we answer?</legend>
+        <label class="opt"><input type="radio" name="q-how" value="issue" checked /> In the next issue (anonymous)</label>
+        <label class="opt"><input type="radio" name="q-how" value="email" /> Reply to me by email</label>
+      </fieldset>
+      <button class="btn" type="submit">Send question</button>
+      <p class="fine" id="ask-msg">Not subscribed yet? <a href="#signup">Subscribe first</a>, it's free.</p>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.getElementById("ask-form")!.addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("ask-msg")!.textContent = "Questions open soon. We're connecting this form to our inbox.";
+  });
+</script>
+
+<style>
+  .ask { border-top: 1px solid var(--rule); }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; padding-block: 52px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; gap: 28px; } }
+  h2 { font: 800 clamp(28px, 4vw, 40px)/1.1 var(--f-display); letter-spacing: -0.02em; margin: 12px 0; }
+  .copy > p { color: var(--muted); max-width: 52ch; margin: 0 0 24px; }
+  .qa { border-left: 3px solid var(--accent); padding: 4px 0 4px 18px; }
+  .q { font: 600 18px/1.4 var(--f-display); margin: 10px 0 8px; }
+  .a { margin: 0; color: var(--muted); font-size: 15px; }
+  .card {
+    display: grid; gap: 16px; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: var(--radius); padding: 24px;
+  }
+  .fld { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
+  .fld > label, legend { font: 600 14px/1.2 var(--f-display); color: var(--muted); padding: 0; margin-bottom: 6px; }
+  input[type="email"], select, textarea {
+    font: 400 16px/1.4 var(--f-body); padding: 11px 12px; border-radius: 8px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink); width: 100%;
+  }
+  textarea { resize: vertical; }
+  .opt { display: flex; gap: 10px; align-items: center; font-size: 15px; padding: 4px 0; }
+  .opt input { accent-color: var(--accent); }
+  .btn { justify-self: start; padding: 13px 18px; }
+  .fine { margin: 0; font-size: 13px; color: var(--muted); }
+  .fine a { color: var(--accent); }
+</style>

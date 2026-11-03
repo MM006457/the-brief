@@ -1,0 +1,25 @@
+---
+const year = new Date().getFullYear();
+---
+<footer>
+  <div class="in row">
+    <span>© {year} The Brief · Misha &amp; Nehir · Warwick Business School</span>
+    <nav aria-label="Footer">
+      <a href="/issues/">Issues</a>
+      <a href="/about/">About us</a>
+      <a href="/#ask">Ask us</a>
+      <a href="https://github.com/MM006457/the-brief">Source on GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  footer { border-top: 1px solid var(--rule); }
+  .row {
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    padding-block: 28px; color: var(--muted); font-size: 14px;
+  }
+  nav { display: flex; gap: 18px; flex-wrap: wrap; }
+  a { color: var(--muted); }
+  a:hover { color: var(--ink); }
+</style>

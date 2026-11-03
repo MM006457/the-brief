@@ -1,0 +1,119 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import Base from "../layouts/Base.astro";
+import { team, degree, school, buildSteps } from "../data/team";
+
+// Show a photo only if the file exists in public/team/
+const hasPhoto = (file: string) => fs.existsSync(path.join(process.cwd(), "public", "team", file));
+---
+<Base title="About us" current="about" description={`Who writes The Brief: two ${school} students studying ${degree}.`}>
+  <section class="in intro">
+    <span class="label">About us</span>
+    <h1>Two students, one newsletter, built from scratch</h1>
+    <p class="lede">We're Misha and Nehir, studying {degree} at {school}. We started The Brief because we wanted one place that explains the week's business news and tells you what to say about it in an interview.</p>
+    <div class="chips">
+      <span class="chip">{school}</span>
+      <span class="chip">{degree}</span>
+      <span class="chip">Every Monday since October 2026</span>
+    </div>
+  </section>
+
+  <section class="in people">
+    {team.map((p) => (
+      <article class="person">
+        <div class="photo">
+          {hasPhoto(p.photo)
+            ? <img src={`/team/${p.photo}`} alt={`Photo of ${p.name}`} loading="lazy" />
+            : <span>Photo of {p.name} goes here<br /><small>public/team/{p.photo}</small></span>}
+        </div>
+        <div class="pbody">
+          <div>
+            <h2>{p.name}</h2>
+            <span class="label role">{p.role}</span>
+          </div>
+          <dl>
+            <div><dt>Degree</dt><dd>{degree}, {school}</dd></div>
+            <div>
+              <dt>Modules</dt>
+              <dd>
+                <ul class="mods">
+                  {p.modules.map((m) => <li><code>{m.code}</code><span>{m.name}</span></li>)}
+                </ul>
+              </dd>
+            </div>
+            <div><dt>Writes</dt><dd>{p.writes}</dd></div>
+          </dl>
+          <div class="links">
+            {p.links.filter((l) => l.url).map((l) => <a class="ln" href={l.url}>{l.label}</a>)}
+          </div>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <section class="build">
+    <div class="in grid">
+      <div>
+        <span class="label">How we built it</span>
+        <h2>Designed, coded and shipped by us</h2>
+        <p>The Brief isn't a template. We designed the site, wrote the code with AI-assisted development, and run it on the same tools real product teams use.</p>
+        <p>Astro · GitHub · Vercel · Decap CMS · Beehiiv</p>
+        <a class="src" href="https://github.com/MM006457/the-brief">View the source code →</a>
+      </div>
+      <ol class="steps">
+        {buildSteps.map((s) => (
+          <li class={s.status}>
+            <span><b>{s.title}</b><small>{s.detail}</small></span>
+            <span class="st">{s.status === "done" ? "Done" : s.status === "next" ? "Next" : "Planned"}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .intro { padding-block: 64px 40px; }
+  h1 { font: 800 clamp(40px, 7vw, 76px)/1 var(--f-display); letter-spacing: -0.035em; margin: 16px 0 20px; text-wrap: balance; max-width: 16ch; }
+  .lede { font-size: 20px; line-height: 1.5; color: var(--muted); max-width: 58ch; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .chip { font: 600 13px/1 var(--f-display); padding: 8px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+
+  .people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding-block: 8px 56px; }
+  @media (max-width: 760px) { .people { grid-template-columns: 1fr; } }
+  .person { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+  .photo { aspect-ratio: 4 / 3; max-width: 100%; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); text-align: center; border-bottom: 1px solid var(--rule); }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+  .photo span { font: 600 14px/1.5 var(--f-display); border: 1.5px dashed currentColor; border-radius: 10px; padding: 14px 18px; }
+  .photo small { font: 500 12px var(--f-mono); opacity: 0.8; }
+  .pbody { padding: 24px; display: grid; gap: 18px; }
+  .person h2 { font: 800 34px/1 var(--f-display); letter-spacing: -0.03em; margin: 0; }
+  .role { display: block; margin-top: 10px; }
+  dl { margin: 0; display: grid; gap: 14px; }
+  dt { font: 600 13px/1 var(--f-display); color: var(--muted); margin-bottom: 6px; }
+  dd { margin: 0; }
+  .mods { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .mods li { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: baseline; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .mods li:last-child { border-bottom: 0; padding-bottom: 0; }
+  code { font: 500 13px/1 var(--f-mono); color: var(--accent); }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .links:empty { display: none; }
+  .ln { font: 600 13px/1 var(--f-body); padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px; text-decoration: none; }
+
+  .build { background: var(--band); color: var(--band-ink); }
+  .grid { padding-block: 56px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 48px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; gap: 24px; } }
+  .build .label { color: var(--band-accent); }
+  .build h2 { font: 800 clamp(28px, 4vw, 42px)/1.05 var(--f-display); letter-spacing: -0.03em; margin: 12px 0 14px; }
+  .build p { opacity: 0.82; margin: 0 0 12px; max-width: 48ch; }
+  .src { color: var(--band-accent); font-weight: 600; text-decoration: none; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center; padding: 13px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
+  .steps li::before { content: counter(s); font: 500 13px/1 var(--f-mono); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.35); }
+  .steps li.done::before { background: var(--band-accent); color: #2b1a40; border-color: var(--band-accent); }
+  .steps b { font-weight: 600; }
+  .steps small { display: block; opacity: 0.7; font-size: 13px; }
+  .st { font: 600 13px/1 var(--f-display); opacity: 0.7; }
+  .done .st, .next .st { opacity: 1; color: var(--band-accent); }
+</style>

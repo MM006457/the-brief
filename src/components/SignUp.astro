@@ -1,0 +1,43 @@
+---
+// Email sign-up band. In step 5 this form connects to Beehiiv.
+---
+<section class="signup" id="signup">
+  <div class="in grid">
+    <div>
+      <h2>Five minutes. Every Monday.</h2>
+      <p>Written by two Warwick Business School students for everyone applying, interviewing or just trying to keep up.</p>
+    </div>
+    <form id="signup-form">
+      <label for="signup-email" class="sr-only">Email address</label>
+      <input id="signup-email" type="email" required placeholder="you@university.ac.uk" autocomplete="email" />
+      <button class="btn" type="submit">Subscribe</button>
+      <p class="fine" id="signup-msg">Free. Unsubscribe any time.</p>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.getElementById("signup-form")!.addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("signup-msg")!.textContent = "Sign-up opens soon. We're connecting it to our mailing list.";
+  });
+</script>
+
+<style>
+  .signup { background: var(--band); color: var(--band-ink); }
+  .grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px; align-items: center; padding-block: 52px;
+  }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; gap: 20px; } }
+  h2 { font: 800 clamp(28px, 4vw, 40px)/1.1 var(--f-display); margin: 0 0 10px; letter-spacing: -0.02em; }
+  p { margin: 0; opacity: 0.82; }
+  form { display: flex; gap: 10px; flex-wrap: wrap; }
+  input {
+    flex: 1 1 220px; min-width: 0; font: 400 16px var(--f-body); padding: 13px 14px; border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: var(--band-ink);
+  }
+  input::placeholder { color: var(--band-ink); opacity: 0.55; }
+  .btn { padding: 14px 18px; background: var(--band-accent); color: #2b1a40; }
+  .fine { width: 100%; font-size: 13px; opacity: 0.7; margin-top: 4px; }
+</style>
