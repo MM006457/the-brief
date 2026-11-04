@@ -1,4 +1,4 @@
-// Site-wide settings.unzip -o the-brief-update.zip && rm the-brief-update.zip
+// Site-wide settings.unzip -o the-brief-update.zip && rm the-brief-update.zipunzip -o the-brief-update.zip && rm the-brief-update.zip
 
 // Your Beehiiv RSS feed (Beehiiv → Settings → RSS → RSS Feed URL → Copy).
 // The website reads every published Beehiiv post from here. Not a secret.
