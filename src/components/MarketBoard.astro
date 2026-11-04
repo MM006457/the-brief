@@ -1,0 +1,132 @@
+---
+// A split-flap "departure board" of market prices, like an old trading floor.
+// Uses the same /api/markets data as the top ticker (no extra API credits).
+import { markets } from "../data/markets";
+---
+<section class="board" aria-label="Market board">
+  <div class="in wrap">
+    <div class="head" data-reveal>
+      <span class="label">The market board</span>
+      <h2 data-split>Where markets closed</h2>
+      <p class="note" id="board-note">Loading prices…</p>
+    </div>
+    <div class="panel" role="table" aria-label="Market prices" data-reveal>
+      <div class="row hdr" role="row">
+        <span role="columnheader">Market</span><span role="columnheader">Price</span><span role="columnheader">Change</span>
+      </div>
+      {markets.map((m) => (
+        <div class="row" role="row" data-label={m.label}>
+          <span class="flaps name" role="cell" data-text={m.label.toUpperCase()}></span>
+          <span class="flaps px" role="cell" data-text="—"></span>
+          <span class="flaps chg" role="cell" data-text="—"></span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  import gsap from "gsap";
+  type Quote = { label: string; price: number; percent: number };
+
+  const CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,%+-/&$£▲▼";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const note = document.getElementById("board-note")!;
+
+  const fmt = (n: number) =>
+    n >= 1000 ? n.toLocaleString("en-GB", { maximumFractionDigits: 0 })
+    : n >= 10 ? n.toFixed(2) : n.toFixed(4);
+
+  /** Draws text into flap cells, then flips each one through letters until it lands. */
+  function flap(el: HTMLElement, text: string, width: number, cls = "") {
+    const target = text.padEnd(width).slice(0, width);
+    el.className = el.className.replace(/\s(up|down)/g, "") + (cls ? ` ${cls}` : "");
+    el.setAttribute("aria-label", text.trim());
+    if (el.children.length !== width) {
+      el.innerHTML = "";
+      for (let i = 0; i < width; i++) {
+        const c = document.createElement("span");
+        c.className = "f";
+        c.setAttribute("aria-hidden", "true");
+        el.appendChild(c);
+      }
+    }
+    [...el.children].forEach((cell, i) => {
+      const final = target[i];
+      const c = cell as HTMLElement;
+      if (reduce) { c.textContent = final; return; }
+      const steps = 6 + Math.floor(Math.random() * 8) + i;
+      let n = 0;
+      const tick = () => {
+        n++;
+        c.textContent = n >= steps ? final : CHARS[Math.floor(Math.random() * CHARS.length)];
+        gsap.fromTo(c, { rotateX: -70 }, { rotateX: 0, duration: 0.06, ease: "none" });
+        if (n < steps) gsap.delayedCall(0.045, tick);
+      };
+      gsap.delayedCall(i * 0.02, tick);
+    });
+  }
+
+  const rows = [...document.querySelectorAll<HTMLElement>(".board .row[data-label]")];
+  rows.forEach((r) => flap(r.querySelector(".name")!, r.querySelector<HTMLElement>(".name")!.dataset.text!, 10));
+
+  async function load() {
+    try {
+      const data = await (await fetch("/api/markets")).json();
+      if (!data.ok) throw new Error(data.error);
+      const byLabel = new Map<string, Quote>(data.quotes.map((q: Quote) => [q.label, q]));
+      rows.forEach((r, i) => {
+        const q = byLabel.get(r.dataset.label!);
+        setTimeout(() => {
+          if (!q) { flap(r.querySelector(".px")!, "N/A", 8); flap(r.querySelector(".chg")!, "", 7); return; }
+          const up = q.percent >= 0;
+          flap(r.querySelector(".px")!, fmt(q.price), 8);
+          flap(r.querySelector(".chg")!, `${up ? "▲" : "▼"}${Math.abs(q.percent).toFixed(2)}%`, 7, up ? "up" : "down");
+        }, i * 120);
+      });
+      const t = new Date(data.updated).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+      note.textContent = `Last updated ${t} UK · refreshes every 30 minutes`;
+    } catch {
+      note.textContent = "Prices are taking a break. Check back shortly.";
+    }
+  }
+
+  // Start flipping when the board scrolls into view
+  const io = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) { io.disconnect(); load(); }
+  }, { rootMargin: "0px 0px -15% 0px" });
+  io.observe(document.querySelector(".board")!);
+</script>
+
+<style>
+  .board { background: var(--band); color: var(--band-ink); }
+  .wrap { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); gap: 48px; align-items: center; padding-block: 56px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; gap: 24px; } }
+  .head .label { color: var(--band-accent); }
+  h2 { font: 800 clamp(30px, 4.5vw, 46px)/1.05 var(--f-display); letter-spacing: -0.03em; margin: 12px 0 12px; }
+  .note { margin: 0; opacity: 0.75; font-size: 14px; }
+  .panel {
+    background: #160d22; border-radius: 14px; padding: 18px; display: grid; gap: 8px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); overflow-x: auto;
+  }
+  .row { display: grid; grid-template-columns: auto auto auto; justify-content: space-between; gap: 16px; align-items: center; min-width: max-content; }
+  .hdr { font: 600 12px/1 var(--f-display); color: var(--band-accent); padding: 0 2px 6px; }
+  .flaps { display: inline-flex; gap: 2px; perspective: 300px; }
+  .flaps :global(.f) {
+    display: inline-grid; place-items: center; width: 1.05em; height: 1.5em;
+    font: 600 clamp(12px, 1.25vw, 16px)/1 var(--f-mono); color: #f4f0fa; background: #2b1a40;
+    border-radius: 3px; position: relative; transform-origin: center; white-space: pre;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+  .flaps :global(.f)::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, 0.45); }
+  @media (max-width: 560px) {
+    .panel { overflow: visible; padding: 14px; gap: 14px; }
+    .hdr { display: none; }
+    .row { grid-template-columns: auto auto; min-width: 0; row-gap: 6px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .name { grid-column: 1 / -1; }
+    .flaps :global(.f) { font-size: 13px; }
+  }
+  .chg.up :global(.f) { color: #7fe0ad; }
+  .chg.down :global(.f) { color: #ff9d8a; }
+</style>

@@ -1,0 +1,102 @@
+---
+// A–Z of business terms: the list in src/data/glossary.ts plus every
+// "Lesson of the week" from the Beehiiv issues, added automatically.
+export const prerender = false;
+import Base from "../layouts/Base.astro";
+import { glossary } from "../data/glossary";
+import { getIssues, issueUrl, pad } from "../lib/beehiiv";
+import { FEED_REFRESH_SECONDS } from "../data/site";
+
+Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
+
+type Entry = { term: string; definition: string; from?: { label: string; href: string } };
+const map = new Map<string, Entry>();
+for (const g of glossary) map.set(g.term.toLowerCase(), g);
+for (const issue of await getIssues()) {
+  for (const l of issue.lessons) {
+    map.set(l.term.toLowerCase(), {
+      term: l.term,
+      definition: l.definition,
+      from: { label: `Issue ${pad(issue.number)}`, href: `${issueUrl(issue)}#${l.anchor}` },
+    });
+  }
+}
+const terms = [...map.values()].sort((a, b) => a.term.localeCompare(b.term, "en-GB"));
+const letters = [...new Set(terms.map((t) => t.term[0].toUpperCase()))];
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+---
+<Base title="Glossary" current="glossary" description="Plain-English definitions of the business terms that come up in interviews.">
+  <div class="in wrap">
+    <header class="top">
+      <span class="label">Glossary</span>
+      <h1 data-split>Business terms, in plain English</h1>
+      <p class="lede">Every term we explain in The Brief, in one place. {terms.length} terms so far, and it grows every week.</p>
+      <div class="search">
+        <label for="g-search" class="sr-only">Search the glossary</label>
+        <input id="g-search" type="search" placeholder="Search, e.g. premium" autocomplete="off" />
+        <span class="count" id="g-count" aria-live="polite">{terms.length} terms</span>
+      </div>
+      <nav class="az" aria-label="Jump to letter">
+        {letters.map((l) => <a href={`#letter-${l}`}>{l}</a>)}
+      </nav>
+    </header>
+
+    <dl class="list" data-stagger>
+      {terms.map((t, i) => {
+        const L = t.term[0].toUpperCase();
+        const first = i === 0 || terms[i - 1].term[0].toUpperCase() !== L;
+        return (
+          <div class="entry" id={slug(t.term)} data-term={`${t.term} ${t.definition}`.toLowerCase()}>
+            {first && <span class="letter" id={`letter-${L}`} aria-hidden="true">{L}</span>}
+            <dt>{t.term}</dt>
+            <dd>
+              {t.definition}
+              {t.from && <a class="from" href={t.from.href}>From {t.from.label} →</a>}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
+    <p class="none" id="g-none" hidden>No terms match that search yet. <a href="/#ask">Ask us</a> and we might explain it next week.</p>
+  </div>
+</Base>
+
+<script>
+  const input = document.getElementById("g-search") as HTMLInputElement;
+  const count = document.getElementById("g-count")!;
+  const none = document.getElementById("g-none")!;
+  const entries = [...document.querySelectorAll<HTMLElement>(".entry")];
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    let shown = 0;
+    entries.forEach((e) => {
+      const hit = !q || e.dataset.term!.includes(q);
+      e.hidden = !hit;
+      if (hit) shown++;
+    });
+    count.textContent = `${shown} ${shown === 1 ? "term" : "terms"}`;
+    none.hidden = shown > 0;
+  });
+</script>
+
+<style>
+  .wrap { max-width: 860px; padding-block: 56px; }
+  h1 { font: 800 clamp(38px, 6.5vw, 64px)/1.02 var(--f-display); letter-spacing: -0.035em; margin: 12px 0 16px; text-wrap: balance; }
+  .lede { color: var(--muted); font-size: 19px; margin: 0 0 24px; max-width: 56ch; }
+  .search { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .search input {
+    flex: 1 1 260px; min-width: 0; font: 400 16px var(--f-body); padding: 13px 14px; border-radius: 10px;
+    border: 1px solid var(--rule); background: var(--surface); color: var(--ink);
+  }
+  .count { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .az { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 8px; }
+  .az a { font: 600 14px/1 var(--f-display); text-decoration: none; color: var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; }
+  .list { margin: 24px 0 0; display: grid; }
+  .entry { display: grid; grid-template-columns: 220px 1fr; gap: 8px 24px; padding: 20px 0; border-top: 1px solid var(--rule); position: relative; scroll-margin-top: 90px; }
+  .letter { grid-column: 1 / -1; font: 800 44px/1 var(--f-display); color: var(--accent); letter-spacing: -0.03em; margin-bottom: 4px; scroll-margin-top: 90px; }
+  dt { font: 700 20px/1.3 var(--f-display); }
+  dd { margin: 0; color: var(--muted); max-width: 60ch; }
+  .from { display: block; margin-top: 8px; font: 600 13px/1 var(--f-display); color: var(--accent); text-decoration: none; }
+  @media (max-width: 640px) { .entry { grid-template-columns: 1fr; } }
+  .none a { color: var(--accent); }
+</style>

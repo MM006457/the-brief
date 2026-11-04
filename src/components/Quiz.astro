@@ -1,0 +1,153 @@
+---
+// Interactive weekly quiz. Questions come from src/data/quizzes.ts.
+interface Props {
+  quiz: { issue: number; title: string; questions: { q: string; options: string[]; answer: number; why: string }[] };
+  issueHref?: string;
+}
+const { quiz, issueHref } = Astro.props;
+const letters = ["A", "B", "C", "D", "E"];
+---
+<section class="quiz" data-quiz data-total={quiz.questions.length} data-issue={quiz.issue}>
+  <header class="qhead" data-reveal>
+    <span class="label">Quiz · Issue {String(quiz.issue).padStart(2, "0")}</span>
+    <h2>{quiz.title}</h2>
+    <p class="intro">{quiz.questions.length} quick questions on this week's issue.{issueHref && <> <a href={issueHref}>Read it first</a> if you haven't.</>}</p>
+  </header>
+
+  <ol class="qs" data-stagger>
+    {quiz.questions.map((item, qi) => (
+      <li class="card" data-q={qi} data-answer={item.answer}>
+        <p class="num">Question {qi + 1} of {quiz.questions.length}</p>
+        <h3>{item.q}</h3>
+        <div class="opts" role="group" aria-label={`Answers for question ${qi + 1}`}>
+          {item.options.map((o, oi) => (
+            <button type="button" class="opt" data-i={oi}>
+              <span class="ltr" aria-hidden="true">{letters[oi]}</span><span>{o}</span>
+            </button>
+          ))}
+        </div>
+        <p class="why" hidden><strong class="verdict"></strong> {item.why}</p>
+      </li>
+    ))}
+  </ol>
+
+  <div class="result" hidden role="status">
+    <p class="score"><span class="n">0</span>/{quiz.questions.length}</p>
+    <p class="msg"></p>
+    <div class="actions">
+      <button type="button" class="btn share">Share my score</button>
+      <button type="button" class="ghost retry">Try again</button>
+    </div>
+    <p class="copied" hidden>Copied. Paste it anywhere.</p>
+  </div>
+</section>
+
+<script>
+  import gsap from "gsap";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.querySelectorAll<HTMLElement>("[data-quiz]").forEach((quiz) => {
+    const total = Number(quiz.dataset.total);
+    const result = quiz.querySelector<HTMLElement>(".result")!;
+    const scoreEl = result.querySelector<HTMLElement>(".n")!;
+    let answered = 0, correct = 0;
+
+    quiz.querySelectorAll<HTMLElement>(".card").forEach((card) => {
+      const right = Number(card.dataset.answer);
+      const why = card.querySelector<HTMLElement>(".why")!;
+      card.querySelectorAll<HTMLButtonElement>(".opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (card.classList.contains("done")) return;
+          card.classList.add("done");
+          const pick = Number(btn.dataset.i);
+          const ok = pick === right;
+          card.querySelectorAll<HTMLButtonElement>(".opt").forEach((b) => {
+            b.disabled = true;
+            if (Number(b.dataset.i) === right) b.classList.add("right");
+          });
+          if (!ok) btn.classList.add("wrong");
+          why.querySelector(".verdict")!.textContent = ok ? "Correct." : "Not quite.";
+          why.hidden = false;
+          if (!reduce) {
+            gsap.from(why, { y: 10, autoAlpha: 0, duration: 0.4, ease: "power2.out" });
+            if (ok) gsap.fromTo(btn, { scale: 0.97 }, { scale: 1, duration: 0.4, ease: "back.out(3)" });
+            else gsap.fromTo(btn, { x: -6 }, { x: 0, duration: 0.45, ease: "elastic.out(1, 0.3)" });
+          }
+          answered++; if (ok) correct++;
+          if (answered === total) finish();
+        });
+      });
+    });
+
+    function finish() {
+      result.hidden = false;
+      const msg = result.querySelector(".msg")!;
+      msg.textContent = correct === total ? "Perfect score. You're interview-ready."
+        : correct >= total / 2 ? "Solid. Reread the issue for the one you missed."
+        : "Worth another read. The answers are all in this week's issue.";
+      const counter = { v: 0 };
+      if (reduce) scoreEl.textContent = String(correct);
+      else {
+        gsap.from(result, { y: 20, autoAlpha: 0, duration: 0.6, ease: "power3.out" });
+        gsap.to(counter, { v: correct, duration: 0.8, ease: "power2.out", onUpdate: () => (scoreEl.textContent = String(Math.round(counter.v))) });
+      }
+      result.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    }
+
+    result.querySelector(".share")!.addEventListener("click", async () => {
+      const text = `I scored ${correct}/${total} on The Brief's weekly quiz. Can you beat it?`;
+      const url = location.origin + "/quiz/";
+      try {
+        if (navigator.share) { await navigator.share({ text, url }); return; }
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        result.querySelector<HTMLElement>(".copied")!.hidden = false;
+      } catch {}
+    });
+
+    result.querySelector(".retry")!.addEventListener("click", () => {
+      answered = 0; correct = 0; result.hidden = true;
+      quiz.querySelectorAll<HTMLElement>(".card").forEach((card) => {
+        card.classList.remove("done");
+        card.querySelector<HTMLElement>(".why")!.hidden = true;
+        card.querySelectorAll<HTMLButtonElement>(".opt").forEach((b) => { b.disabled = false; b.classList.remove("right", "wrong"); });
+      });
+      quiz.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+    });
+  });
+</script>
+
+<style>
+  .quiz { display: grid; gap: 24px; }
+  .qhead h2 { font: 800 clamp(30px, 5vw, 44px)/1.05 var(--f-display); letter-spacing: -0.03em; margin: 10px 0; }
+  .intro { color: var(--muted); margin: 0; }
+  .intro a { color: var(--accent); }
+  .qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 22px; }
+  .num { margin: 0 0 6px; font: 600 13px/1 var(--f-display); color: var(--accent); }
+  .card h3 { font: 700 20px/1.35 var(--f-display); margin: 0 0 16px; text-wrap: balance; }
+  .opts { display: grid; gap: 10px; }
+  .opt {
+    display: flex; gap: 12px; align-items: center; text-align: left; width: 100%;
+    font: 500 15px/1.4 var(--f-body); color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:disabled { cursor: default; }
+  .ltr { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font: 600 12px/1 var(--f-display); background: var(--accent-soft); color: var(--accent); }
+  .opt.right { border-color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--surface)); }
+  .opt.right .ltr { background: var(--up); color: #fff; }
+  .opt.wrong { border-color: var(--down); background: color-mix(in srgb, var(--down) 10%, var(--surface)); }
+  .opt.wrong .ltr { background: var(--down); color: #fff; }
+  .card.done .opt:not(.right):not(.wrong) { opacity: 0.55; }
+  .why { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+  .why strong { color: var(--ink); }
+  .result { text-align: center; background: var(--band); color: var(--band-ink); border-radius: var(--radius); padding: 32px 22px; }
+  .score { font: 800 72px/1 var(--f-display); margin: 0; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+  .score .n { color: var(--band-accent); }
+  .msg { margin: 10px 0 20px; opacity: 0.85; }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .result .btn { background: var(--band-accent); color: #2b1a40; }
+  .ghost { font: 600 14px/1 var(--f-body); background: transparent; color: var(--band-ink); border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 12px 16px; cursor: pointer; }
+  .copied { margin: 12px 0 0; font-size: 13px; opacity: 0.8; }
+</style>

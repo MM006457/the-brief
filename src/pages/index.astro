@@ -4,6 +4,8 @@ export const prerender = false;
 import Base from "../layouts/Base.astro";
 import AskForm from "../components/AskForm.astro";
 import SignUp from "../components/SignUp.astro";
+import MarketBoard from "../components/MarketBoard.astro";
+import { quizzes } from "../data/quizzes";
 import { getIssues, issueUrl, formatDate, pad } from "../lib/beehiiv";
 import { FEED_REFRESH_SECONDS } from "../data/site";
 
@@ -12,6 +14,7 @@ Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SEC
 const issues = await getIssues();
 const latest = issues[0];
 const url = latest ? issueUrl(latest) : "/issues/";
+const quiz = [...quizzes].sort((a, b) => b.issue - a.issue)[0];
 ---
 <Base>
   {latest ? (
@@ -23,15 +26,15 @@ const url = latest ? issueUrl(latest) : "/issues/";
             <span>{formatDate(latest.date)}</span>
             <span>{latest.readTime} min read</span>
           </div>
-          <h1>{latest.title}</h1>
-          {latest.summary && <p class="deck">{latest.summary}</p>}
-          <div class="cta">
+          <h1 data-split>{latest.title}</h1>
+          {latest.summary && <p class="deck" data-reveal>{latest.summary}</p>}
+          <div class="cta" data-reveal>
             <a class="btn" href={url}>Read Issue {pad(latest.number)}</a>
             <a class="ghost" href="/issues/">All issues →</a>
           </div>
         </div>
         {latest.stories.length > 0 && (
-          <aside class="index" aria-label="In this issue">
+          <aside class="index" aria-label="In this issue" data-reveal>
             <h2 class="label muted">In this issue</h2>
             <ol>
               {latest.stories.map((s) => (
@@ -46,19 +49,21 @@ const url = latest ? issueUrl(latest) : "/issues/";
     <section class="hero" id="latest">
       <div class="in empty">
         <span class="label">Coming soon</span>
-        <h1>Issue 01 lands this week</h1>
+        <h1 data-split>Issue 01 lands this week</h1>
         <p class="deck">What every business student should know this week, with what to say about it in your next interview. Subscribe and it arrives in your inbox.</p>
         <div class="cta"><a class="btn" href="#signup">Subscribe free</a></div>
       </div>
     </section>
   )}
 
+  <MarketBoard />
+
   {latest && latest.stories.length > 0 && (
     <section class="desks" id="desks">
       <div class="in">
-        <h2 class="h2">The desks</h2>
+        <h2 class="h2" data-split>The desks</h2>
         <p class="sub">Every Monday. Each story ends with what it means for you.</p>
-        <div class="cards">
+        <div class="cards" data-stagger>
           {latest.stories.slice(0, 4).map((s) => (
             <a class="card" href={`${url}#${s.anchor}`}>
               <span class="label">{s.section}</span>
@@ -68,6 +73,25 @@ const url = latest ? issueUrl(latest) : "/issues/";
             </a>
           ))}
         </div>
+      </div>
+    </section>
+  )}
+
+  {quiz && (
+    <section class="promo">
+      <div class="in promo-grid">
+        <a class="tile" href="/quiz/" data-reveal>
+          <span class="label">Weekly quiz</span>
+          <h3>{quiz.title}</h3>
+          <p>{quiz.questions.length} questions on this week's issue. How interview-ready are you?</p>
+          <span class="go">Take the quiz →</span>
+        </a>
+        <a class="tile" href="/glossary/" data-reveal>
+          <span class="label">Glossary</span>
+          <h3>Business terms, in plain English</h3>
+          <p>Every term we explain, from acquisition premium to fiscal drag. Searchable, and growing weekly.</p>
+          <span class="go">Open the glossary →</span>
+        </a>
       </div>
     </section>
   )}
@@ -97,12 +121,21 @@ const url = latest ? issueUrl(latest) : "/issues/";
   .desks .in { padding-block: 48px; }
   .h2 { font: 800 30px/1.2 var(--f-display); letter-spacing: -0.02em; margin: 0 0 6px; }
   .sub { color: var(--muted); margin: 0 0 24px; }
-  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-  @media (max-width: 960px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 520px) { .cards { grid-template-columns: 1fr; } }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 20px; }
   .card { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 3px solid var(--ink); text-decoration: none; }
   .card h3 { font: 700 21px/1.25 var(--f-display); margin: 0; text-wrap: balance; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
   .meta { margin-top: auto; color: var(--muted); font-size: 13px; font-weight: 500; }
   .card:hover h3 { color: var(--accent); }
+  .promo { border-top: 1px solid var(--rule); }
+  .promo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; padding-block: 48px; }
+  .tile {
+    display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 16px; text-decoration: none;
+    background: var(--surface); border: 1px solid var(--rule); transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+  .tile:hover { transform: translateY(-4px); border-color: var(--accent); }
+  .tile h3 { font: 800 26px/1.15 var(--f-display); letter-spacing: -0.02em; margin: 0; }
+  .tile p { margin: 0; color: var(--muted); }
+  .go { margin-top: auto; padding-top: 8px; font: 600 14px/1 var(--f-display); color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
 </style>

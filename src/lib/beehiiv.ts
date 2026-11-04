@@ -21,6 +21,7 @@ export type Issue = {
   html: string;
   stories: Story[];
   sections: { text: string; anchor: string }[];
+  lessons: { term: string; definition: string; anchor: string }[];
 };
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@", cdataPropName: "#cdata" });
@@ -56,6 +57,7 @@ function clean(html: string): string {
 function outline(html: string) {
   const sections: { text: string; anchor: string }[] = [];
   const stories: Story[] = [];
+  const lessons: { term: string; definition: string; anchor: string }[] = [];
   const tokens = [...html.matchAll(/<(h2|h3|p)[^>]*>([\s\S]*?)<\/\1>/gi)];
   let current: Story | null = null;
   for (const [, tag, inner] of tokens) {
@@ -70,9 +72,11 @@ function outline(html: string) {
       current.title = t;
     } else if (current && name === "p" && current.title && !current.blurb) {
       current.blurb = t.length > 140 ? t.slice(0, 137).trimEnd() + "…" : t;
+      // "Lesson of the week" sections feed the glossary: Heading 3 = term, first paragraph = definition
+      if (/lesson|glossary/i.test(current.section)) lessons.push({ term: current.title, definition: t, anchor: current.anchor });
     }
   }
-  return { sections, stories: stories.filter((s) => s.title) };
+  return { sections, stories: stories.filter((s) => s.title), lessons };
 }
 
 let cache: { at: number; issues: Issue[] } | null = null;

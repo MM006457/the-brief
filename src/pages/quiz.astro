@@ -1,0 +1,34 @@
+---
+export const prerender = false;
+import Base from "../layouts/Base.astro";
+import Quiz from "../components/Quiz.astro";
+import { quizzes } from "../data/quizzes";
+import { getIssues, issueUrl } from "../lib/beehiiv";
+import { FEED_REFRESH_SECONDS } from "../data/site";
+
+Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
+
+const issues = await getIssues();
+// Show the newest quiz; link to its issue if that issue is published.
+const quiz = [...quizzes].sort((a, b) => b.issue - a.issue)[0];
+const issue = quiz && issues.find((i) => i.number === quiz.issue);
+const past = [...quizzes].sort((a, b) => b.issue - a.issue).slice(1);
+---
+<Base title="Weekly quiz" current="quiz" description="Three quick questions on this week's business news. How interview-ready are you?">
+  <div class="in wrap">
+    {quiz ? <Quiz quiz={quiz} issueHref={issue ? issueUrl(issue) : undefined} /> : <p>The first quiz arrives with Issue 01.</p>}
+    {past.length > 0 && (
+      <section class="past">
+        <h2 class="label">Past quizzes</h2>
+        <ul>{past.map((p) => <li><a href={`/quiz/${p.issue}/`}>Issue {String(p.issue).padStart(2, "0")}: {p.title}</a></li>)}</ul>
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .wrap { max-width: 760px; padding-block: 56px; }
+  .past { margin-top: 40px; }
+  .past ul { padding-left: 1.2em; }
+  .past a { color: var(--accent); }
+</style>

@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+import Base from "../../layouts/Base.astro";
+import Quiz from "../../components/Quiz.astro";
+import { quizzes } from "../../data/quizzes";
+import { getIssues, issueUrl } from "../../lib/beehiiv";
+
+const n = Number(Astro.params.issue);
+const quiz = quizzes.find((q) => q.issue === n);
+if (!quiz) return new Response(null, { status: 404 });
+const issue = (await getIssues()).find((i) => i.number === n);
+---
+<Base title={`Quiz: Issue ${String(n).padStart(2, "0")}`} current="quiz">
+  <div class="in wrap">
+    <Quiz quiz={quiz} issueHref={issue ? issueUrl(issue) : undefined} />
+    <p class="back"><a href="/quiz/">← Latest quiz</a></p>
+  </div>
+</Base>
+
+<style>
+  .wrap { max-width: 760px; padding-block: 56px; }
+  .back a { color: var(--accent); }
+</style>

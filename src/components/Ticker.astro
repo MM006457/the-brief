@@ -54,8 +54,10 @@ import { markets } from "../data/markets";
       status.textContent = `Updated ${t} UK`;
     } catch (e) {
       status.textContent = "Markets unavailable";
+      if (!retried) { retried = true; setTimeout(load, 70_000); } // try once more after the per-minute limit resets
     }
   }
+  let retried = false;
   load();
 </script>
 

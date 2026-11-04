@@ -9,7 +9,7 @@ import Ticker from "../components/Ticker.astro";
 interface Props {
   title?: string;
   description?: string;
-  current?: "home" | "issues" | "about";
+  current?: "home" | "issues" | "about" | "glossary" | "quiz";
 }
 const {
   title,
@@ -41,6 +41,10 @@ const fullTitle = title ? `${title} · The Brief` : "The Brief";
         const t = localStorage.getItem("brief-theme");
         if (t) document.documentElement.dataset.theme = t;
       } catch (e) {}
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("motion");
+        setTimeout(() => document.documentElement.classList.remove("motion"), 2500);
+      }
     </script>
   </head>
   <body>
@@ -50,5 +54,8 @@ const fullTitle = title ? `${title} · The Brief` : "The Brief";
       <slot />
     </main>
     <Footer />
+    <script>
+      import "../scripts/motion";
+    </script>
   </body>
 </html>

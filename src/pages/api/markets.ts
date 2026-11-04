@@ -7,6 +7,11 @@ export const prerender = false;
 
 type Quote = { label: string; note?: string; price: number; change: number; percent: number };
 
+// The last good set of prices. If Twelve Data is busy (429) or down, we show these instead of nothing.
+let lastGood: { updated: string; quotes: Quote[] } | null = null;
+const fallback = (error: string) =>
+  lastGood ? json({ ok: true, stale: true, ...lastGood }, 300) : json({ ok: false, error }, 60);
+
 export const GET: APIRoute = async () => {
   const key = process.env.TWELVE_DATA_KEY ?? import.meta.env.TWELVE_DATA_KEY;
   if (!key) return json({ ok: false, error: "No API key set" }, 0);
@@ -16,7 +21,7 @@ export const GET: APIRoute = async () => {
     const res = await fetch(
       `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols)}&apikey=${key}`
     );
-    if (!res.ok) return json({ ok: false, error: `Data provider returned ${res.status}` }, 60);
+    if (!res.ok) return fallback(`Data provider returned ${res.status}`);
     const data = await res.json();
 
     // With several symbols, Twelve Data returns { "SPY": {...}, "QQQ": {...} }.
@@ -32,11 +37,12 @@ export const GET: APIRoute = async () => {
         percent: Number(q.percent_change),
       });
     }
-    if (!quotes.length) return json({ ok: false, error: data?.message ?? "No quotes returned" }, 60);
+    if (!quotes.length) return fallback(data?.message ?? "No quotes returned");
 
-    return json({ ok: true, updated: new Date().toISOString(), quotes }, REFRESH_SECONDS);
+    lastGood = { updated: new Date().toISOString(), quotes };
+    return json({ ok: true, ...lastGood }, REFRESH_SECONDS);
   } catch (err) {
-    return json({ ok: false, error: "Could not reach the data provider" }, 60);
+    return fallback("Could not reach the data provider");
   }
 };
 

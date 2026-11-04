@@ -44,3 +44,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
 }
+
+[hidden] { display: none !important; }
+
+/* Motion: before the animation script runs, hide what it will reveal (so it doesn't flash).
+   The script removes .motion when it's ready, or after 2.5s at the latest. */
+.motion [data-reveal], .motion [data-stagger] > *, .motion [data-split] { visibility: hidden; }

@@ -3,6 +3,8 @@
 export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import SignUp from "../../components/SignUp.astro";
+import Quiz from "../../components/Quiz.astro";
+import { quizzes } from "../../data/quizzes";
 import { getIssues, formatDate, pad } from "../../lib/beehiiv";
 import { FEED_REFRESH_SECONDS } from "../../data/site";
 
@@ -12,12 +14,14 @@ if (!issue) return new Response(null, { status: 404, statusText: "Not found" });
 
 Astro.response.headers.set("Cache-Control", `public, s-maxage=${FEED_REFRESH_SECONDS}, stale-while-revalidate=86400`);
 const num = pad(issue.number);
+const quiz = quizzes.find((q) => q.issue === issue.number);
 ---
 <Base title={`Issue ${num}: ${issue.title}`} description={issue.summary} current="issues">
+  <div class="progress" data-progress aria-hidden="true"></div>
   <article class="issue">
     <header class="mast">
       <div class="meta"><span>Issue {num}</span><span>{formatDate(issue.date)}</span><span>{issue.readTime} min read</span></div>
-      <h1>{issue.title}</h1>
+      <h1 data-split>{issue.title}</h1>
       {issue.summary && <p class="sub">{issue.summary}</p>}
     </header>
 
@@ -28,7 +32,9 @@ const num = pad(issue.number);
       </nav>
     )}
 
-    <div class="prose" set:html={issue.html} />
+    <div class="prose" data-rule set:html={issue.html} />
+
+    {quiz && <div class="quizwrap"><Quiz quiz={quiz} /></div>}
 
     <footer class="end">
       <p class="big">That's this week's Brief.</p>
@@ -53,14 +59,23 @@ const num = pad(issue.number);
   .toc h2 { margin: 0 0 12px; color: var(--muted); }
   .toc ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
   .toc a { display: inline-block; text-decoration: none; font: 600 14px/1 var(--f-display); padding: 9px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+  .progress {
+    position: fixed; left: 0; right: 0; top: 0; height: 3px; z-index: 20; background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+  }
+  .quizwrap { margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--rule); }
   .end { text-align: center; padding-top: 48px; color: var(--muted); }
   .big { font: 800 28px/1.2 var(--f-display); color: var(--ink); margin: 0 0 8px; }
 
   /* ---- Styles for the issue content coming from Beehiiv ---- */
   .prose { font-size: 17px; line-height: 1.7; overflow-wrap: anywhere; }
   .prose :global(h2) {
-    font: 600 14px/1.2 var(--f-display); color: var(--accent);
-    margin: 56px 0 0; padding-top: 20px; border-top: 3px solid var(--ink); scroll-margin-top: 80px;
+    font: 600 14px/1.2 var(--f-display); color: var(--accent); position: relative; --rule: 1;
+    margin: 56px 0 0; padding-top: 20px; scroll-margin-top: 80px;
+  }
+  .prose :global(h2)::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--ink);
+    transform: scaleX(var(--rule)); transform-origin: left;
   }
   .prose :global(h3) { font: 800 clamp(26px, 5vw, 36px)/1.12 var(--f-display); letter-spacing: -0.025em; margin: 10px 0 20px; text-wrap: balance; }
   .prose :global(h4) { font: 700 19px/1.3 var(--f-display); margin: 28px 0 10px; }
