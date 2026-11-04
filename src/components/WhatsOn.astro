@@ -1,0 +1,122 @@
+---
+// "What's on this week": event cards built from the latest Beehiiv issue.
+// In Beehiiv: a Heading 2 called "What's on this week", then a bullet list, one event per line:
+//   Organiser: Event name, 5th Nov, Venue
+//   Organiser: Role name: Applications open
+import type { WhatsOn } from "../lib/beehiiv";
+interface Props { items: WhatsOn[] }
+const { items } = Astro.props;
+
+const ukToday = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" }); // YYYY-MM-DD
+const dayMs = 86_400_000;
+const status = (d?: string) => {
+  if (!d) return "";
+  const diff = Math.round((Date.parse(d) - Date.parse(ukToday)) / dayMs);
+  return diff < 0 ? "past" : diff === 0 ? "today" : diff === 1 ? "tomorrow" : "soon";
+};
+const label = { past: "Passed", today: "Today", tomorrow: "Tomorrow", soon: "" } as Record<string, string>;
+const order = { today: 0, tomorrow: 1, soon: 2, "": 3, past: 4 } as Record<string, number>;
+
+const cards = items
+  .map((e) => ({ ...e, s: e.open ? "" : status(e.date) }))
+  .sort((a, b) => order[a.s] - order[b.s] || (a.date ?? "9").localeCompare(b.date ?? "9"));
+
+const fmt = (d: string, o: Intl.DateTimeFormatOptions) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { ...o, timeZone: "UTC" });
+---
+{cards.length > 0 && (
+  <section class="whatson" id="whats-on" aria-labelledby="whatson-h">
+    <div class="in">
+      <div class="head">
+        <span class="label">At Warwick</span>
+        <h2 id="whatson-h" data-split>What's on this week</h2>
+      </div>
+      <ul class="grid" data-stagger>
+        {cards.map((e) => (
+          <li class={`ev ${e.s}`}>
+            {e.date ? (
+              <div class="cal" aria-hidden="true">
+                <span class="mon">{fmt(e.date, { month: "short" })}</span>
+                <span class="day" data-day={fmt(e.date, { day: "numeric" })}>{fmt(e.date, { day: "numeric" })}</span>
+                <span class="wd">{fmt(e.date, { weekday: "short" })}</span>
+              </div>
+            ) : (
+              <div class={`cal ${e.open ? "open" : ""}`} aria-hidden="true">
+                <span class="mon">{e.open ? "Apply" : "Note"}</span>
+                <span class="day">{e.open ? "→" : "•"}</span>
+                <span class="wd">{e.open ? "Now" : ""}</span>
+              </div>
+            )}
+            <div class="body">
+              <div class="top">
+                {e.org && <span class="org">{e.org}</span>}
+                {e.open && <span class="pill open"><span class="dot"></span>Applications open</span>}
+                {label[e.s] && <span class={`pill ${e.s}`}>{e.s === "today" && <span class="dot"></span>}{label[e.s]}</span>}
+              </div>
+              <h3>{e.title}</h3>
+              <p class="meta">
+                {e.date && <time datetime={e.date}>{fmt(e.date, { weekday: "long", day: "numeric", month: "long" })}</time>}
+                {e.venue && <span>{e.venue}</span>}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+
+<script>
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  gsap.registerPlugin(ScrollTrigger);
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // Calendar days tick up to the date as the cards arrive, like a tear-off calendar
+    document.querySelectorAll<HTMLElement>(".whatson .day[data-day]").forEach((el, i) => {
+      const end = Number(el.dataset.day);
+      const n = { v: Math.max(1, end - 6) };
+      el.textContent = String(Math.round(n.v));
+      gsap.to(n, {
+        v: end, duration: 0.9, delay: 0.15 + i * 0.08, ease: "power2.out",
+        onUpdate: () => (el.textContent = String(Math.round(n.v))),
+        scrollTrigger: { trigger: el, start: "top 92%", once: true },
+      });
+    });
+  }
+</script>
+
+<style>
+  .whatson { border-top: 1px solid var(--rule); }
+  .in { padding-block: 48px; }
+  .head h2 { font: 800 clamp(30px, 4.5vw, 44px)/1.05 var(--f-display); letter-spacing: -0.03em; margin: 10px 0 24px; }
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+  .ev {
+    display: flex; gap: 16px; align-items: flex-start; padding: 16px; border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--rule); transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .ev:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .ev.past { opacity: 0.55; }
+  .ev.past:hover { transform: none; border-color: var(--rule); }
+  .cal {
+    flex: none; width: 64px; border-radius: 10px; overflow: hidden; text-align: center;
+    background: var(--paper); border: 1px solid var(--rule); display: grid;
+  }
+  .mon { background: var(--accent); color: var(--on-accent); font: 600 11px/1 var(--f-display); padding: 5px 0; text-transform: uppercase; letter-spacing: 0.06em; }
+  .day { font: 800 28px/1.1 var(--f-display); padding-top: 4px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .wd { font: 500 11px/1 var(--f-body); color: var(--muted); padding: 2px 0 7px; min-height: 18px; }
+  .cal.open .mon { background: var(--up); }
+  .ev.today .mon { background: var(--down); }
+  .body { min-width: 0; display: grid; gap: 4px; }
+  .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .org { font: 600 13px/1.2 var(--f-display); color: var(--accent); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font: 600 11px/1 var(--f-display); padding: 4px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+  .pill.today { background: color-mix(in srgb, var(--down) 14%, var(--surface)); color: var(--down); }
+  .pill.open { background: color-mix(in srgb, var(--up) 14%, var(--surface)); color: var(--up); }
+  .pill.past { background: transparent; color: var(--muted); border: 1px solid var(--rule); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.25; transform: scale(0.7); } }
+  h3 { font: 700 18px/1.3 var(--f-display); margin: 0; text-wrap: balance; }
+  .meta { margin: 0; display: flex; gap: 4px 10px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
+  .meta > * { white-space: nowrap; }
+  .meta > * + *::before { content: "·"; margin-right: 10px; }
+  @media (prefers-reduced-motion: reduce) { .ev, .ev:hover { transition: none; transform: none; } .dot { animation: none; } }
+</style>

@@ -10,6 +10,15 @@ import { XMLParser } from "fast-xml-parser";
 import { BEEHIIV_RSS_URL } from "../data/site";
 
 export type Story = { section: string; title: string; blurb: string; anchor: string };
+export type WhatsOn = {
+  org: string;           // e.g. "Warwick Economics"
+  title: string;         // e.g. "Intro to Consulting"
+  venue?: string;        // e.g. "Oculus"
+  date?: string;         // ISO date, e.g. "2026-11-05", when one is given
+  open?: boolean;        // "Applications open" items with no date
+  raw: string;           // the line exactly as written, used if it can't be read
+};
+
 export type Issue = {
   number: number;
   slug: string;
@@ -22,7 +31,43 @@ export type Issue = {
   stories: Story[];
   sections: { text: string; anchor: string }[];
   lessons: { term: string; definition: string; anchor: string }[];
+  whatsOn: WhatsOn[];
 };
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/** Reads one event line like "Warwick Economics: Intro to Consulting, 5th Nov, Oculus." */
+export function parseEvent(line: string, issueDate: Date): WhatsOn {
+  const raw = line.trim();
+  const text = raw.replace(/[.\s]+$/, "");
+  const colon = text.indexOf(":");
+  const org = colon > 0 ? text.slice(0, colon).trim() : "";
+  const rest = colon > 0 ? text.slice(colon + 1) : text;
+  const parts = rest.split(/,|\.\s+|\s+[–—-]\s+/).map((p) => p.trim()).filter(Boolean);
+  let date: string | undefined;
+  const others: string[] = [];
+  for (const part of parts) {
+    const m = part.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,})/i) || part.match(/^([a-z]{3,})\s+(\d{1,2})(?:st|nd|rd|th)?/i);
+    const dayFirst = m && /^\d/.test(m[1]);
+    const day = m ? Number(dayFirst ? m[1] : m[2]) : NaN;
+    const mon = m ? MONTHS.indexOf((dayFirst ? m[2] : m[1]).slice(0, 3).toLowerCase()) : -1;
+    if (!date && m && mon >= 0 && day >= 1 && day <= 31) {
+      let year = issueDate.getUTCFullYear();
+      if (mon < issueDate.getUTCMonth() - 6) year += 1; // e.g. a January event in a December issue
+      date = `${year}-${String(mon + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    } else others.push(part);
+  }
+  const title = others.shift() ?? rest.trim();
+  const open = !date && /applications?\s+(are\s+)?open/i.test(text);
+  return {
+    org,
+    title: open ? title.replace(/\s*[:\-–]?\s*applications?\s+(are\s+)?open\s*$/i, "") || title : title,
+    venue: others.join(", ") || undefined,
+    date,
+    open,
+    raw,
+  };
+}
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@", cdataPropName: "#cdata" });
 
@@ -58,12 +103,18 @@ function outline(html: string) {
   const sections: { text: string; anchor: string }[] = [];
   const stories: Story[] = [];
   const lessons: { term: string; definition: string; anchor: string }[] = [];
-  const tokens = [...html.matchAll(/<(h2|h3|p)[^>]*>([\s\S]*?)<\/\1>/gi)];
+  const whatsOnLines: string[] = [];
+  const tokens = [...html.matchAll(/<(h2|h3|p|li)[^>]*>([\s\S]*?)<\/\1>/gi)];
   let current: Story | null = null;
   for (const [, tag, inner] of tokens) {
     const t = strip(inner);
     if (!t) continue;
     const name = tag.toLowerCase();
+    // "What's on this week" / "Events" sections: every bullet becomes an event card
+    if (name === "li") {
+      if (current && /what.?s on|events|deadlines|happening/i.test(current.section)) whatsOnLines.push(t);
+      continue;
+    }
     if (name === "h2") {
       current = { section: t, title: "", blurb: "", anchor: anchorFor(t) };
       sections.push({ text: t, anchor: current.anchor });
@@ -76,7 +127,7 @@ function outline(html: string) {
       if (/lesson|glossary/i.test(current.section)) lessons.push({ term: current.title, definition: t, anchor: current.anchor });
     }
   }
-  return { sections, stories: stories.filter((s) => s.title), lessons };
+  return { sections, stories: stories.filter((s) => s.title), lessons, whatsOnLines };
 }
 
 let cache: { at: number; issues: Issue[] } | null = null;
@@ -97,16 +148,21 @@ export async function getIssues(): Promise<Issue[]> {
       const link = text(it.link);
       const slug = (link.split("/").filter(Boolean).pop() || text(it.guid)).replace(/[^a-z0-9-]/gi, "-").toLowerCase();
       const words = strip(raw).split(" ").length;
+      const date = new Date(text(it.pubDate));
+      const o = outline(html);
       const image = it.enclosure?.["@url"] || it["media:content"]?.["@url"] || undefined;
       return {
         slug,
         title: strip(text(it.title)),
         summary: strip(text(it.description)).slice(0, 220),
-        date: new Date(text(it.pubDate)),
+        date,
         readTime: Math.max(1, Math.round(words / 220)),
         image,
         html,
-        ...outline(html),
+        sections: o.sections,
+        stories: o.stories,
+        lessons: o.lessons,
+        whatsOn: o.whatsOnLines.map((l) => parseEvent(l, date)),
       };
     });
 

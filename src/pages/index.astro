@@ -5,6 +5,7 @@ import Base from "../layouts/Base.astro";
 import AskForm from "../components/AskForm.astro";
 import SignUp from "../components/SignUp.astro";
 import MarketBoard from "../components/MarketBoard.astro";
+import WhatsOn from "../components/WhatsOn.astro";
 import { quizzes } from "../data/quizzes";
 import { getIssues, issueUrl, formatDate, pad } from "../lib/beehiiv";
 import { FEED_REFRESH_SECONDS } from "../data/site";
@@ -55,6 +56,8 @@ const quiz = [...quizzes].sort((a, b) => b.issue - a.issue)[0];
       </div>
     </section>
   )}
+
+  {latest && <WhatsOn items={latest.whatsOn} />}
 
   <MarketBoard />
 
