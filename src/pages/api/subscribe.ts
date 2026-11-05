@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
         referring_site: "the-brief-phi-one.vercel.app",
       }),
     });
-    if (res.ok) return reply(200, "You're subscribed. Check your inbox on Monday.");
+    if (res.ok) return reply(200, "You're subscribed. Check your inbox on Wednesday.");
     console.error("Beehiiv sign-up failed:", res.status, await res.text());
     return reply(502, "We couldn't sign you up just now. Please try again in a minute.");
   } catch (err) {
