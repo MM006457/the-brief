@@ -6,6 +6,8 @@ import AskForm from "../components/AskForm.astro";
 import SignUp from "../components/SignUp.astro";
 import MarketBoard from "../components/MarketBoard.astro";
 import WhatsOn from "../components/WhatsOn.astro";
+import { events } from "../data/events";
+import { parseEvent } from "../lib/beehiiv";
 import { quizzes } from "../data/quizzes";
 import { getIssues, issueUrl, formatDate, pad } from "../lib/beehiiv";
 import { FEED_REFRESH_SECONDS } from "../data/site";
@@ -16,6 +18,10 @@ const issues = await getIssues();
 const latest = issues[0];
 const url = latest ? issueUrl(latest) : "/issues/";
 const quiz = [...quizzes].sort((a, b) => b.issue - a.issue)[0];
+// Events from src/data/events.ts, plus any listed in the latest Beehiiv issue (duplicates skipped)
+const fileEvents = events.map((line) => parseEvent(line, new Date()));
+const seen = new Set(fileEvents.map((e) => e.title.toLowerCase()));
+const whatsOn = [...fileEvents, ...(latest?.whatsOn ?? []).filter((e) => !seen.has(e.title.toLowerCase()))];
 ---
 <Base>
   {latest ? (
@@ -57,7 +63,7 @@ const quiz = [...quizzes].sort((a, b) => b.issue - a.issue)[0];
     </section>
   )}
 
-  {latest && <WhatsOn items={latest.whatsOn} />}
+  <WhatsOn items={whatsOn} />
 
   <MarketBoard />
 
