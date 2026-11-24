@@ -37,4 +37,54 @@ export const quizzes = [
       },
     ],
   },
+  {
+    issue: 2,
+    title: "Shoppers, sellers and rule-makers",
+    questions: [
+      {
+        q: "More Brits plan to shop Black Friday, yet UK spending is forecast to fall 32% to £9.9bn. What best explains the gap?",
+        options: [
+          "Retailers are offering smaller discounts",
+          "Shoppers are hunting for deals but spending less per basket",
+          "Most Black Friday sales have moved to January",
+          "Online shopping has stopped being counted",
+        ],
+        answer: 1,
+        why: "Footfall is up but baskets have shrunk. With energy bills and rates rising, people buy what they needed anyway and skip the extras.",
+      },
+      {
+        q: "The Bank of England raised Bank Rate to 4% in November, its first rise since 2023. Why does that hit Black Friday?",
+        options: [
+          "It makes imported goods cheaper",
+          "Higher mortgage and loan costs leave households less to spend",
+          "It forces retailers to close on Black Friday",
+          "It cuts the price of energy",
+        ],
+        answer: 1,
+        why: "Higher rates push up mortgage and borrowing costs. Every extra pound spent on repayments is a pound that doesn't reach the shops.",
+      },
+      {
+        q: "Metro Bank launched a formal sale process with no buyer lined up. Why might a board choose to sell at this moment?",
+        options: [
+          "The bank is about to run out of money",
+          "Regulators ordered the sale",
+          "Its turnaround is proven, but the share price hasn't fully caught up",
+          "UK law requires banks to sell every five years",
+        ],
+        answer: 2,
+        why: "Selling after a recovery locks in gains while the story is strongest. A buyer may pay up for profits that the share price hasn't priced in yet.",
+      },
+      {
+        q: "In the US AI debate, what would federal 'preemption' do?",
+        options: [
+          "Ban AI models above a certain size",
+          "Let each state set its own AI rules",
+          "Replace state AI laws with one national rulebook",
+          "Hand AI regulation to the EU",
+        ],
+        answer: 2,
+        why: "Preemption means a national law overrides state laws on the same subject. Supporters say one rulebook cuts compliance costs; governors want room to act themselves.",
+      },
+    ],
+  },
 ];

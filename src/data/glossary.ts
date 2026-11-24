@@ -35,4 +35,24 @@ export const glossary = [
     definition:
       "A listed company's share price multiplied by its number of shares. It's what the stock market says the whole company is worth today.",
   },
+  {
+    term: "Formal sale process",
+    definition:
+      "When a UK-listed company publicly puts itself up for auction and invites buyers to come forward, often anonymously, rather than waiting for an offer. Metro Bank started one in November 2026.",
+  },
+  {
+    term: "Put up or shut up",
+    definition:
+      "The UK Takeover Code rule that gives a named possible bidder 28 days to make a firm offer or walk away for six months. The Takeover Panel can waive it during a formal sale process.",
+  },
+  {
+    term: "Return on tangible equity (RoTE)",
+    definition:
+      "A bank's profit as a percentage of its tangible equity (shareholders' funds minus intangible assets like goodwill). It's the main measure investors use to judge how well a bank uses its capital.",
+  },
+  {
+    term: "Preemption",
+    definition:
+      "When a national law overrides state or local laws on the same subject. In the US AI debate, it would stop individual states writing their own AI rules.",
+  },
 ];
