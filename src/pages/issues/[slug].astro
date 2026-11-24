@@ -78,6 +78,21 @@ const quiz = quizzes.find((q) => q.issue === issue.number);
     transform: scaleX(var(--rule)); transform-origin: left;
   }
   .prose :global(h3) { font: 800 clamp(26px, 5vw, 36px)/1.12 var(--f-display); letter-spacing: -0.025em; margin: 10px 0 20px; text-wrap: balance; }
+  /* Each article's own front page (big headline, section name underneath), like a single-article issue */
+  .prose :global(.article-head) {
+    text-align: center; margin: 72px 0 32px; padding: 40px 0 32px; scroll-margin-top: 72px;
+    border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule);
+  }
+  .prose > :global(.article-head:first-child) { margin-top: 32px; }
+  .prose :global(.article-head .headline) {
+    font: 800 clamp(32px, 6.5vw, 56px)/1.04 var(--f-display); letter-spacing: -0.03em;
+    margin: 0 auto 14px; max-width: 18ch; text-wrap: balance;
+  }
+  .prose :global(.article-head h2) {
+    font: 400 clamp(17px, 2.4vw, 21px)/1.3 var(--f-body, inherit); color: var(--muted);
+    margin: 0; padding: 0; max-width: none;
+  }
+  .prose :global(.article-head h2)::before { display: none; }
   .prose :global(h4) { font: 700 19px/1.3 var(--f-display); margin: 28px 0 10px; }
   .prose :global(p), .prose :global(li) { max-width: 65ch; }
   .prose :global(ul), .prose :global(ol) { padding-left: 1.2em; display: grid; gap: 8px; }
@@ -90,6 +105,17 @@ const quiz = quizzes.find((q) => q.issue === issue.number);
   .prose :global(blockquote) { margin: 28px 0; padding: 18px 20px; border-radius: var(--radius); background: var(--accent-soft); border: 0; }
   .prose :global(blockquote p) { margin: 0 0 8px; }
   .prose :global(blockquote p:last-child) { margin: 0; }
+  .prose :global(details.sources) { margin: 28px 0 8px; border-top: 1px solid var(--rule); padding-top: 12px; max-width: 65ch; }
+  .prose :global(details.sources summary) {
+    cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px;
+    font: 600 14px/1 var(--f-display); color: var(--muted); padding: 8px 12px; border-radius: 99px; background: var(--accent-soft);
+  }
+  .prose :global(details.sources summary::-webkit-details-marker) { display: none; }
+  .prose :global(details.sources summary::after) { content: "+"; font-weight: 700; color: var(--accent); }
+  .prose :global(details.sources[open] summary::after) { content: "–"; }
+  .prose :global(details.sources ol) { margin: 14px 0 0; font-size: 14px; color: var(--muted); gap: 6px; }
+  .prose :global(details.sources li p) { margin: 0; }
+  .prose :global(details.sources a) { color: var(--muted); text-decoration-color: var(--accent); }
   .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; margin: 8px 0 24px; }
   .prose :global(th), .prose :global(td) { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 </style>

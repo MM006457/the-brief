@@ -95,8 +95,17 @@ function clean(html: string): string {
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/\s(style|class|bgcolor|width|height|align)="[^"]*"/gi, "")
     .replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/gi, (_m, attrs, inner) => `<h2${attrs} id="${anchorFor(inner)}">${inner}</h2>`)
-    .replace(/<a /gi, '<a rel="noopener" ');
+    .replace(/<a /gi, '<a rel="noopener" target="_blank" ')
+    .replace(SOURCES, (_m, list: string) => {
+      const n = (list.match(/<li/gi) || []).length;
+      return `<details class="sources"><summary>Sources${n ? ` (${n})` : ""}</summary><ol>${list}</ol></details>`;
+    });
 }
+
+// A line that says just "Sources" (normal text, bold, or Heading 4), followed by a bullet or
+// numbered list, becomes a hidden "Sources" drop-down on the website. The email shows it as a normal list.
+const SOURCES =
+  /<(?:p|h3|h4|h5|h6)[^>]*>\s*(?:<(?:strong|b|em|i|span)[^>]*>\s*)*sources?\s*:?\s*(?:<\/(?:strong|b|em|i|span)>\s*)*<\/(?:p|h3|h4|h5|h6)>\s*(?:<div[^>]*>\s*)?<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>(?:\s*<\/div>)?/gi;
 
 /** Pairs each Heading 2 (section) with the Heading 3 and first paragraph that follow it. */
 function outline(html: string) {
@@ -130,6 +139,21 @@ function outline(html: string) {
   return { sections, stories: stories.filter((s) => s.title), lessons, whatsOnLines };
 }
 
+/**
+ * Gives every article its own front page: a Heading 2 (section) followed straight away by a
+ * Heading 3 (headline) becomes a big centred headline with the section name underneath.
+ * "Lesson of the week" and "What's on" keep the compact style.
+ */
+function articleHeads(html: string): string {
+  return html.replace(
+    /<h2([^>]*)\sid="([^"]*)"([^>]*)>([\s\S]*?)<\/h2>\s*<h3[^>]*>([\s\S]*?)<\/h3>/gi,
+    (m, a1, id, a2, section, headline) =>
+      /lesson|glossary|what.?s on|events|deadlines|happening/i.test(strip(section))
+        ? m
+        : `<header class="article-head" id="${id}"><h3 class="headline">${headline}</h3><h2${a1}${a2}>${section}</h2></header>`,
+  );
+}
+
 let cache: { at: number; issues: Issue[] } | null = null;
 
 /** All published issues, newest first. Returns [] if the feed can't be reached. */
@@ -150,6 +174,7 @@ export async function getIssues(): Promise<Issue[]> {
       const words = strip(raw).split(" ").length;
       const date = new Date(text(it.pubDate));
       const o = outline(html);
+      const display = articleHeads(html);
       const image = it.enclosure?.["@url"] || it["media:content"]?.["@url"] || undefined;
       return {
         slug,
@@ -158,7 +183,7 @@ export async function getIssues(): Promise<Issue[]> {
         date,
         readTime: Math.max(1, Math.round(words / 220)),
         image,
-        html,
+        html: display,
         sections: o.sections,
         stories: o.stories,
         lessons: o.lessons,
